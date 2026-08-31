@@ -1,0 +1,535 @@
+{
+  "name": "[PRD] [Attio] Brief IA - Nouveau Deal (auto)",
+  "flow": [
+    {
+      "id": 1,
+      "mapper": {
+        "url": "/v2/objects/deals/records/query",
+        "method": "POST",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": "{\n  \"filter\": {\n    \"created_at\": { \"$gte\": \"{{formatDate(addMinutes(now; -30); \"YYYY-MM-DD\"; \"UTC\")}}T{{formatDate(addMinutes(now; -30); \"HH:mm:ss\"; \"UTC\")}}.000Z\" }\n  },\n  \"limit\": 50\n}"
+      },
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0,
+          "name": "Deals créés dans les 30 dernières minutes"
+        },
+        "restore": {
+          "expect": {
+            "qs": {
+              "mode": "chose"
+            },
+            "method": {
+              "mode": "chose",
+              "label": "POST"
+            },
+            "headers": {
+              "mode": "chose",
+              "items": [
+                null
+              ]
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "attio2"
+              },
+              "label": "Morning - New Prod"
+            }
+          }
+        }
+      },
+      "parameters": {
+        "__IMTCONN__": 3292919
+      }
+    },
+    {
+      "id": 2,
+      "filter": {
+        "name": "Au moins un deal",
+        "conditions": [
+          [
+            {
+              "a": "{{1.body.data}}",
+              "b": "0",
+              "o": "array:greater"
+            }
+          ]
+        ]
+      },
+      "mapper": {
+        "array": "{{1.body.data}}"
+      },
+      "module": "builtin:BasicFeeder",
+      "version": 1,
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0,
+          "name": "Un bundle par deal"
+        },
+        "restore": {
+          "expect": {
+            "array": {
+              "mode": "edit"
+            }
+          }
+        }
+      },
+      "parameters": {}
+    },
+    {
+      "id": 3,
+      "mapper": {
+        "url": "/v2/notes",
+        "method": "GET",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "qs": [
+          {
+            "key": "parent_object",
+            "value": "deals"
+          },
+          {
+            "key": "parent_record_id",
+            "value": "{{2.id.record_id}}"
+          },
+          {
+            "key": "limit",
+            "value": "50"
+          }
+        ]
+      },
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0,
+          "name": "Notes déjà présentes sur le deal"
+        },
+        "restore": {
+          "expect": {
+            "qs": {
+              "mode": "chose",
+              "items": [
+                null,
+                null,
+                null
+              ]
+            },
+            "method": {
+              "mode": "chose",
+              "label": "GET"
+            },
+            "headers": {
+              "mode": "chose",
+              "items": [
+                null
+              ]
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "attio2"
+              },
+              "label": "Morning - New Prod"
+            }
+          }
+        }
+      },
+      "parameters": {
+        "__IMTCONN__": 3292919
+      }
+    },
+    {
+      "id": 4,
+      "filter": {
+        "name": "Pas encore de brief ET quelque chose à chercher",
+        "conditions": [
+          [
+            {
+              "a": "{{join(map(3.body.data; \"title\"); \" | \")}}",
+              "b": "Brief IA",
+              "o": "text:notcontain"
+            }
+          ],
+          [
+            {
+              "a": "{{2.values.associated_company[1].target_record_id}}",
+              "o": "exist"
+            },
+            {
+              "a": "{{2.values.associated_people[1].target_record_id}}",
+              "o": "exist"
+            }
+          ]
+        ]
+      },
+      "mapper": {
+        "url": "/v2/objects/people/records/query",
+        "method": "POST",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": "{\n  \"filter\": { \"record_id\": { \"$eq\": \"{{2.values.associated_people[1].target_record_id}}\" } },\n  \"limit\": 1\n}"
+      },
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "metadata": {
+        "designer": {
+          "x": 900,
+          "y": 0,
+          "name": "Contact lié au deal"
+        },
+        "restore": {
+          "expect": {
+            "qs": {
+              "mode": "chose"
+            },
+            "method": {
+              "mode": "chose",
+              "label": "POST"
+            },
+            "headers": {
+              "mode": "chose",
+              "items": [
+                null
+              ]
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "attio2"
+              },
+              "label": "Morning - New Prod"
+            }
+          }
+        }
+      },
+      "parameters": {
+        "__IMTCONN__": 3292919
+      }
+    },
+    {
+      "id": 5,
+      "mapper": {
+        "url": "/v2/objects/companies/records/query",
+        "method": "POST",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": "{\n  \"filter\": { \"record_id\": { \"$eq\": \"{{2.values.associated_company[1].target_record_id}}\" } },\n  \"limit\": 1\n}"
+      },
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "metadata": {
+        "designer": {
+          "x": 1200,
+          "y": 0,
+          "name": "Entreprise liée au deal"
+        },
+        "restore": {
+          "expect": {
+            "qs": {
+              "mode": "chose"
+            },
+            "method": {
+              "mode": "chose",
+              "label": "POST"
+            },
+            "headers": {
+              "mode": "chose",
+              "items": [
+                null
+              ]
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "attio2"
+              },
+              "label": "Morning - New Prod"
+            }
+          }
+        }
+      },
+      "parameters": {
+        "__IMTCONN__": 3292919
+      }
+    },
+    {
+      "id": 6,
+      "mapper": {
+        "name": "PROMPT",
+        "scope": "roundtrip",
+        "value": "Tu prépares un commercial de Morning (bureaux privés et coworking à Paris) avant son premier échange avec un nouveau lead.\n\nRÈGLES ABSOLUES\n- Sers-toi de la recherche web pour vérifier chaque information. N'invente rien, ne devine pas.\n- Si une information reste introuvable après recherche, écris exactement : non trouvé.\n- N'écris JAMAIS de champ à compléter, de crochets, de « à trouver » ni de texte générique. Une ligne sans information vérifiée doit dire « non trouvé ».\n- Distingue explicitement ce qui est un fait sourcé de ce qui est une hypothèse.\n- Français, ton factuel, pas de superlatifs, 250 mots maximum au total.\n\nDONNÉES CRM (source interne, déjà vérifiée)\n- Deal : {{ifempty(2.values.name[1].value; \"non renseigné\")}}\n- Étape : {{ifempty(2.values.stage[1].status.title; \"non renseigné\")}}\n- Contact : {{ifempty(4.body.data[1].values.name[1].full_name; \"non renseigné\")}} / poste : {{ifempty(4.body.data[1].values.job_title[1].value; \"non renseigné\")}} / email : {{ifempty(4.body.data[1].values.email_addresses[1].email_address; \"non renseigné\")}} / LinkedIn : {{ifempty(4.body.data[1].values.linkedin[1].value; \"non renseigné\")}}\n- Entreprise : {{ifempty(5.body.data[1].values.name[1].value; \"non renseigné\")}} / site : {{ifempty(5.body.data[1].values.domains[1].domain; \"non renseigné\")}} / LinkedIn : {{ifempty(5.body.data[1].values.linkedin[1].value; \"non renseigné\")}} / effectif Attio : {{ifempty(5.body.data[1].values.employee_range[1].option.title; \"non renseigné\")}}\n- Description Attio de l'entreprise : {{ifempty(5.body.data[1].values.description[1].value; \"non renseigné\")}}\n- Besoin : {{ifempty(2.values.number_of_seats[1].value; \"non renseigné\")}} poste(s), type de ressource : {{ifempty(2.values.resource_type[1].option.title; \"non renseigné\")}}\n- Origine du lead : {{ifempty(2.values.deal_source[1].option.title; \"non renseigné\")}} / {{ifempty(2.values.source_commerce[1].option.title; \"non renseigné\")}}\n\nFORMAT DE SORTIE (markdown, exactement ces cinq titres, dans cet ordre)\n\n**L'entreprise**\n3 puces maximum : ce qu'elle fait réellement, sa taille et son implantation, son actualité des 12 derniers mois (levée, croissance, recrutement, déménagement, nouveau marché).\n\n**Le contact**\n2 puces maximum : son rôle réel et son périmètre, son ancienneté ou son parcours quand c'est utile pour l'échange.\n\n**Ce que ça dit du besoin**\n2 puces maximum : ce que ces signaux impliquent pour une recherche de bureaux à Paris. Préfixe chaque puce par « Fait : » ou « Hypothèse : ».\n\n**3 questions à poser**\nTrois questions courtes, spécifiques à ce prospect, qu'un commercial peut poser telles quelles.\n\n**Sources**\nLa liste des URL utilisées, une par ligne. Si aucune source web n'a pu être trouvée, écris : aucune source web trouvée."
+      },
+      "module": "util:SetVariable2",
+      "version": 1,
+      "metadata": {
+        "designer": {
+          "x": 1500,
+          "y": 0,
+          "name": "Prompt de recherche"
+        },
+        "restore": {
+          "expect": {
+            "scope": {
+              "label": "One cycle"
+            }
+          }
+        }
+      },
+      "parameters": {}
+    },
+    {
+      "id": 7,
+      "mapper": {
+        "object": "{{6.PROMPT}}"
+      },
+      "module": "json:TransformToJSON",
+      "version": 1,
+      "metadata": {
+        "designer": {
+          "x": 1800,
+          "y": 0,
+          "name": "Échappement JSON du prompt"
+        },
+        "restore": {
+          "parameters": {
+            "space": {
+              "label": "Empty"
+            }
+          }
+        }
+      },
+      "parameters": {
+        "space": ""
+      }
+    },
+    {
+      "id": 8,
+      "mapper": {
+        "url": "/v1/messages",
+        "method": "POST",
+        "headers": [
+          {
+            "key": "content-type",
+            "value": "application/json"
+          },
+          {
+            "key": "anthropic-version",
+            "value": "2023-06-01"
+          },
+          {
+            "key": "anthropic-beta",
+            "value": "server-side-fallback-2026-07-01"
+          }
+        ],
+        "body": "{\n  \"model\": \"claude-opus-5\",\n  \"max_tokens\": 4000,\n  \"output_config\": { \"effort\": \"low\" },\n  \"fallbacks\": \"default\",\n  \"tools\": [\n    {\n      \"type\": \"web_search_20260209\",\n      \"name\": \"web_search\",\n      \"max_uses\": 5,\n      \"user_location\": { \"type\": \"approximate\", \"country\": \"FR\", \"city\": \"Paris\", \"timezone\": \"Europe/Paris\" }\n    }\n  ],\n  \"messages\": [\n    { \"role\": \"user\", \"content\": {{7.json}} }\n  ]\n}"
+      },
+      "module": "anthropic-claude:makeAnApiCall",
+      "version": 1,
+      "metadata": {
+        "designer": {
+          "x": 2100,
+          "y": 0,
+          "name": "Claude Opus 5 + recherche web"
+        },
+        "restore": {
+          "expect": {
+            "qs": {
+              "mode": "chose"
+            },
+            "method": {
+              "mode": "chose",
+              "label": "POST"
+            },
+            "headers": {
+              "mode": "chose",
+              "items": [
+                null,
+                null,
+                null
+              ]
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "anthropic-claude"
+              },
+              "label": "Anthropic Claude"
+            }
+          }
+        }
+      },
+      "parameters": {
+        "__IMTCONN__": 8495429
+      }
+    },
+    {
+      "id": 9,
+      "mapper": {
+        "name": "BRIEF",
+        "scope": "roundtrip",
+        "value": "{{join(map(8.body.content; \"text\"; \"type\"; \"text\"); newline)}}"
+      },
+      "module": "util:SetVariable2",
+      "version": 1,
+      "metadata": {
+        "designer": {
+          "x": 2400,
+          "y": 0,
+          "name": "Texte du brief"
+        },
+        "restore": {
+          "expect": {
+            "scope": {
+              "label": "One cycle"
+            }
+          }
+        }
+      },
+      "parameters": {}
+    },
+    {
+      "id": 10,
+      "mapper": {
+        "object": "{{9.BRIEF}}"
+      },
+      "module": "json:TransformToJSON",
+      "version": 1,
+      "metadata": {
+        "designer": {
+          "x": 2700,
+          "y": 0,
+          "name": "Échappement JSON du brief"
+        },
+        "restore": {
+          "parameters": {
+            "space": {
+              "label": "Empty"
+            }
+          }
+        }
+      },
+      "parameters": {
+        "space": ""
+      }
+    },
+    {
+      "id": 11,
+      "filter": {
+        "name": "Brief non vide",
+        "conditions": [
+          [
+            {
+              "a": "{{length(9.BRIEF)}}",
+              "b": "80",
+              "o": "number:greater"
+            }
+          ]
+        ]
+      },
+      "mapper": {
+        "url": "/v2/notes",
+        "method": "POST",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": "{\n  \"data\": {\n    \"parent_object\": \"deals\",\n    \"parent_record_id\": \"{{2.id.record_id}}\",\n    \"title\": \"Brief IA – Prospect & Entreprise\",\n    \"format\": \"markdown\",\n    \"content\": {{10.json}}\n  }\n}"
+      },
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "metadata": {
+        "designer": {
+          "x": 3000,
+          "y": 0,
+          "name": "Création de la note sur le deal"
+        },
+        "restore": {
+          "expect": {
+            "qs": {
+              "mode": "chose"
+            },
+            "method": {
+              "mode": "chose",
+              "label": "POST"
+            },
+            "headers": {
+              "mode": "chose",
+              "items": [
+                null
+              ]
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "attio2"
+              },
+              "label": "Morning - New Prod"
+            }
+          }
+        }
+      },
+      "parameters": {
+        "__IMTCONN__": 3292919
+      }
+    }
+  ],
+  "metadata": {
+    "instant": false,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "slots": null,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": true,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "eu1.make.com",
+    "notes": []
+  }
+}
