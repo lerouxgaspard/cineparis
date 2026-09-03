@@ -58,3 +58,37 @@ fait donc à la main, en cinq minutes — la procédure est dans
 Toutes les briques ont été validées individuellement contre l'API Make
 (`validate_blueprint_schema`, `validate_module_configuration` pour chaque module), mais
 le scénario n'a jamais été exécuté : **faites tourner un « Run once » avant d'activer**.
+
+---
+
+# Agent « Pipeline Immo » : lire un label mail et créer le deal Attio
+
+Second chantier, indépendant du précédent. Le scénario
+[`[DEV] Pipeline Immo - Lire email - Gaspard`](https://eu1.make.com/16139/scenarios/5783201/edit)
+(id 5783201) lit le label Gmail des dénonces immo et confie à un agent IA la création du
+deal dans Attio. Il ne créait rien : l'agent terminait toutes ses exécutions par
+« Voulez-vous que je crée automatiquement un nouveau deal ? ».
+
+**Cause** : ses quatre outils étaient tous en lecture seule — aucun ne pouvait écrire dans
+Attio. Et le module de déduplication (`Attio › List Lists`) renvoyait la liste *des listes*
+du workspace, pas leur contenu, d'où la comparaison absurde entre un nom de projet et
+« Liste - Bailleur, Chasse, Prospect… ».
+
+**Point clé trouvé en route** : une dénonce immo n'est pas un enregistrement de l'objet
+`deals`, c'est une **entrée de la liste Attio « Dénonce Immo »** (`team_immo`), dont l'objet
+parent est `companies` et dont les attributs sont exactement Nom du projet / Statut /
+Commentaires / Broker / Propriétaire.
+
+| Fichier | Rôle |
+|---|---|
+| [`make/pipeline-immo-lire-email.blueprint.json`](make/pipeline-immo-lire-email.blueprint.json) | Le blueprint corrigé, à importer dans Make |
+| [`make/generate_pipeline_immo_blueprint.py`](make/generate_pipeline_immo_blueprint.py) | Le script qui le génère (prompt et outils y sont modifiables) |
+| [`docs/pipeline-immo/01-diagnostic.md`](docs/pipeline-immo/01-diagnostic.md) | Les 7 causes, preuves à l'appui, et où va réellement un deal immo |
+| [`docs/pipeline-immo/02-installation.md`](docs/pipeline-immo/02-installation.md) | Import, connexions, les 3 réglages à faire à la main, test du doublon |
+| [`docs/pipeline-immo/03-prompt-et-outils.md`](docs/pipeline-immo/03-prompt-et-outils.md) | Le prompt, les 5 outils, tous les identifiants Attio |
+| [`docs/pipeline-immo/04-pieces-jointes.md`](docs/pipeline-immo/04-pieces-jointes.md) | Lire les PDF joints : pourquoi ce n'est pas branché, et comment l'ajouter |
+
+Même réserve que ci-dessus : chaque module a été validé contre l'API Make
+(`validate_module_configuration`) et la structure du blueprint aussi, mais l'accès Make de
+cette session étant en lecture seule, **le scénario n'a pas été exécuté**. Un « Run once »
+est indispensable avant activation.

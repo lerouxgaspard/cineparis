@@ -1,0 +1,384 @@
+{
+  "name": "[DEV] Pipeline Immo - Lire email - Gaspard",
+  "flow": [
+    {
+      "id": 94,
+      "module": "google-email:triggerWatchNewEmails",
+      "version": 4,
+      "parameters": {
+        "__IMTCONN__": 7498409,
+        "filterType": "simpleSearch",
+        "format": "full",
+        "folder": "INBOX",
+        "labelIds": "Label_3498769696537572611",
+        "criteria": "all",
+        "markSeen": false,
+        "limit": 5,
+        "from": "",
+        "subject": "",
+        "includeWords": "",
+        "excludeWords": "",
+        "size": {
+          "criteria": "larger",
+          "amount": null,
+          "unit": "M"
+        },
+        "hasAttachment": false
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0
+        },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "label": "My Gmail connection (gaspard.l@morning.fr)",
+              "data": {
+                "scoped": "true",
+                "connection": "google-email"
+              }
+            },
+            "filterType": {
+              "label": "Simple filter"
+            },
+            "format": {
+              "label": "Full content"
+            },
+            "folder": {
+              "label": "Inbox"
+            },
+            "labelIds": {
+              "label": "Projet_pipeline_immo"
+            },
+            "criteria": {
+              "label": "All messages"
+            },
+            "size": {
+              "nested": {
+                "criteria": {
+                  "label": "Greater than"
+                },
+                "unit": {
+                  "label": "MB (megabytes)"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 83,
+      "module": "ai-local-agent:RunLocalAIAgent",
+      "version": 0,
+      "parameters": {
+        "makeConnectionId": 9767251
+      },
+      "mapper": {
+        "files": [],
+        "message": "De : {{94.fromName}} <{{94.fromEmail}}>\nDate : {{94.internalDate}}\nObjet : {{94.subject}}\nPièce(s) jointe(s) : {{94.hasAttachment}}\n\n--- Corps de l'email ---\n{{94.fullTextBody}}\n",
+        "threadId": "",
+        "outputType": "text",
+        "tokenLimit": "100",
+        "modelConfig": {
+          "timeout": "",
+          "recursionLimit": 25,
+          "iterationsFromHistoryCount": 10
+        },
+        "defaultModel": "medium",
+        "systemPrompt": "Tu es l'assistant du pôle Immobilier de Morning. À chaque exécution tu reçois UN SEUL email, issu du label Gmail des dénonces immo : une offre de bureaux envoyée par un broker ou un propriétaire. Ton travail est d'enregistrer cette offre comme une entrée de la liste Attio « Dénonce Immo » — ou de ne rien faire si elle y figure déjà.\n\nTu tournes dans une automatisation : personne ne lit ta réponse en direct, personne ne peut répondre à une question. Ne demande JAMAIS de confirmation, ne propose jamais d'« actions recommandées », ne termine jamais par une question. Tu appelles les outils, puis tu rends un compte-rendu.\n\nÉTAPE 1 — EXTRAIRE (objet + corps de l'email)\n- Nom du projet : adresse du bien, sous la forme « numéro rue - code postal ville »\n  (ex. « 9 Cour des Petites Écuries - 75010 Paris »). C'est l'identifiant du projet.\n- Surface : en m², nombre entier, sans unité.\n- Entreprise qui porte l'offre (broker ou mandataire) et son domaine internet, déduit de\n  l'adresse email de l'expéditeur d'origine (romain.rossel@spliit.fr -> spliit.fr).\n- Propriétaire / bailleur : seulement s'il est nommé explicitement dans l'email.\n- Commentaires : ce qu'un commercial doit savoir — étages, configuration, disponibilité,\n  loyer, contact pour visite, conditions d'exclusivité.\nN'invente rien : une information absente reste vide. Attention aux transferts internes :\nun expéditeur @morning.fr n'est ni le broker ni le propriétaire, cherche l'email d'origine\ndans le corps du message.\n\nÉTAPE 2 — VÉRIFIER LES DOUBLONS (obligatoire, avant toute création)\nAppelle « Attio: Chercher un projet » avec un fragment court et discriminant de l'adresse\n(ex. « Petites Écuries », pas l'adresse complète). Si une entrée renvoyée correspond au même\nbien, ARRÊTE-TOI : ne crée rien, et indique dans le compte-rendu l'entrée qui existe déjà.\n\nÉTAPE 3 — RÉSOUDRE L'ENTREPRISE\nAppelle « Attio: Trouver ou créer l'entreprise » avec le domaine trouvé à l'étape 1, et retiens\nle record_id renvoyé (id.record_id). Si le domaine est une messagerie générique (gmail.com,\nhotmail.com, outlook.com, yahoo.fr, free.fr, orange.fr...), n'appelle pas l'outil : sans\nentreprise l'entrée ne peut pas être créée, arrête-toi et signale-le.\n\nÉTAPE 4 — CRÉER L'ENTRÉE\nAppelle « Attio: Créer le deal » avec le record_id de l'étape 3 et les informations de\nl'étape 1. Retiens l'entry_id renvoyé (id.entry_id).\n\nÉTAPE 5 — RATTACHER (seulement ce qui est connu)\n- « Attio: Rattacher le broker » avec l'entry_id et le record_id de l'entreprise de l'étape 3.\n- Propriétaire : uniquement s'il est nommé dans l'email. Résous d'abord son record_id avec\n  « Attio: Trouver ou créer l'entreprise » (avec SON domaine), puis appelle\n  « Attio: Rattacher le propriétaire ». Si tu n'as pas de domaine pour lui, n'appelle pas\n  l'outil et note-le dans le compte-rendu.\n\nRÈGLES\n- Un email = une entrée au maximum. N'appelle jamais deux fois l'outil de création.\n- Si un outil renvoie une erreur, ne réessaie qu'une fois, puis rends le compte-rendu en\n  citant le message d'erreur.\n- Ne t'occupe que de l'email reçu : ne va pas chercher d'autres emails.\n\nCOMPTE-RENDU (ta réponse finale, 7 lignes maximum, pas de question)\nAction : créé | doublon | bloqué\nProjet : ...\nEntreprise : ... (record_id)\nSurface : ...\nEntry ID : ...\nPropriétaire : ... | non nommé dans l'email\nManque : les champs que l'email ne permettait pas de remplir\n",
+        "promptCaching": "none",
+        "fallbackEnabled": false
+      },
+      "tools": [
+        {
+          "name": "Attio: Chercher un projet",
+          "description": "Cherche dans la liste Attio « Dénonce Immo » les entrées dont le nom du projet contient le texte donné, pour éviter les doublons. Passe un fragment court et discriminant de l'adresse (ex. « Petites Écuries », « Falguière »), jamais l'adresse complète : la recherche est un « contient » strict, sensible à la ponctuation. Renvoie de 0 à 10 entrées existantes ; aucun résultat signifie que le projet n'est pas encore dans la liste.",
+          "flow": [
+            {
+              "id": 101,
+              "module": "attio:searchEntries",
+              "version": 2,
+              "parameters": {
+                "__IMTCONN__": 10415895
+              },
+              "mapper": {
+                "list_id": "a804bc1b-8ea3-44ee-8b17-505f918413aa",
+                "queryBuilder": "simple",
+                "filter": [
+                  [
+                    {
+                      "a": "nom_du_projet",
+                      "o": "text:$contains",
+                      "b": "{{83.recherche_nom_du_projet}}"
+                    }
+                  ]
+                ],
+                "limit": 10
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 300
+                },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "label": "Gaspard's Attio OAuth connection (gaspard.l@morning.fr (Morning))",
+                      "data": {
+                        "scoped": "true",
+                        "connection": "attio2"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Attio: Trouver ou créer l'entreprise",
+          "description": "Trouve la company Attio qui porte ce domaine internet, ou la crée si elle n'existe pas encore, et renvoie son record_id (champ id.record_id) — c'est ce record_id qu'il faut réutiliser pour créer l'entrée et pour les rattachements. Passe le domaine nu, sans « https:// » ni « www. » (ex. spliit.fr). N'appelle pas cet outil avec un domaine de messagerie générique (gmail.com, outlook.com, yahoo.fr...) : cela créerait une fausse entreprise.",
+          "flow": [
+            {
+              "id": 102,
+              "module": "attio:assertACompany",
+              "version": 2,
+              "parameters": {
+                "__IMTCONN__": 10415895
+              },
+              "mapper": {
+                "matching_attribute": "97d3d667-af5b-42f6-ad10-4fe4c48fe852",
+                "[domain]domains": [
+                  "{{83.domaine_entreprise}}"
+                ]
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 500
+                },
+                "restore": {
+                  "expect": {
+                    "matching_attribute": {
+                      "mode": "chose",
+                      "label": "Domains"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "label": "Gaspard's Attio OAuth connection (gaspard.l@morning.fr (Morning))",
+                      "data": {
+                        "scoped": "true",
+                        "connection": "attio2"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Attio: Créer le deal",
+          "description": "Crée l'entrée du projet dans la liste Attio « Dénonce Immo », rattachée à la company dont tu passes le record_id (celui renvoyé par « Attio: Trouver ou créer l'entreprise »). À n'appeler qu'une seule fois, et seulement après avoir vérifié l'absence de doublon.\nChamps :\n- company_record_id (obligatoire) : record_id de la company qui porte l'offre.\n- nom_du_projet (obligatoire) : adresse du bien, « numéro rue - code postal ville ».\n- commentaires : le résumé utile au commercial (étages, dispo, loyer, contact visite).\n- surface : nombre entier de m², sans unité. Laisse vide si l'email ne le dit pas.\n- annee_du_projet : année de disponibilité si elle est mentionnée (ex. 2027).\n- statut : passe l'un de ces identifiants exactement — 982dc62d-506f-498a-9be0-c4aa77af759d (A visiter, valeur par défaut pour une nouvelle dénonce), cac94b45-a838-4438-9380-e8f74e4f3811 (Visité), 91d611a2-a9ab-4f96-879b-c2eac300d71a (LOI envoyé), efcd0617-8e7f-4f55-bc4a-22d7d7172845 (Stand-by), 2f4d6976-73a9-4955-b9d2-1af33b2c3433 (Signé).\n- etat : passe l'un de ces identifiants exactement — 945d18ac-0aad-4ca9-8f31-12a9b1fce229 (En cours, valeur par défaut), 4d5fa5b1-d5c8-44fc-bbde-284419d0d313 (Priorité), ae79f56a-afbf-4f20-9454-17096385378f (Attente retour Propriétaire), 7c56a631-be29-4621-9d42-91aef437f223 (Stand-By), 310a0159-093f-4646-a6a7-e14920bdbaed (Signé).\nRenvoie id.entry_id : garde-le pour les rattachements.",
+          "flow": [
+            {
+              "id": 103,
+              "module": "attio:createAnEntry",
+              "version": 2,
+              "parameters": {
+                "__IMTCONN__": 10415895
+              },
+              "mapper": {
+                "selectRecordId": "manually",
+                "parent_object": "45b4d831-b5f5-41db-b3e9-239c683bbe63",
+                "id": "a804bc1b-8ea3-44ee-8b17-505f918413aa",
+                "parent_record_id": "{{83.company_record_id}}",
+                "[text]nom_du_projet": "{{83.nom_du_projet}}",
+                "[text]commentaires": "{{83.commentaires}}",
+                "[number]surface": "{{83.surface}}",
+                "[text]annee_du_p": "{{83.annee_du_projet}}",
+                "[status]stage": "{{83.statut}}",
+                "[status]status": "{{83.etat}}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 700
+                },
+                "restore": {
+                  "expect": {
+                    "selectRecordId": {
+                      "mode": "chose",
+                      "label": "Manually"
+                    },
+                    "parent_object": {
+                      "mode": "chose",
+                      "label": "Company"
+                    },
+                    "id": {
+                      "mode": "chose",
+                      "label": "Dénonce Immo"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "label": "Gaspard's Attio OAuth connection (gaspard.l@morning.fr (Morning))",
+                      "data": {
+                        "scoped": "true",
+                        "connection": "attio2"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Attio: Rattacher le broker",
+          "description": "Renseigne le champ « Broker » de l'entrée créée. Passe entry_id (renvoyé par « Attio: Créer le deal ») et broker_record_id (le record_id de la company du broker). N'appelle cet outil qu'après la création de l'entrée.",
+          "flow": [
+            {
+              "id": 104,
+              "module": "attio:makeAnApiCall",
+              "version": 2,
+              "parameters": {
+                "__IMTCONN__": 10415895
+              },
+              "mapper": {
+                "url": "/v2/lists/a804bc1b-8ea3-44ee-8b17-505f918413aa/entries/{{83.entry_id}}",
+                "method": "PATCH",
+                "headers": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": "{\n  \"data\": {\n    \"entry_values\": {\n      \"broker\": [\n        {\n          \"target_object\": \"companies\",\n          \"target_record_id\": \"{{83.broker_record_id}}\"\n        }\n      ]\n    }\n  }\n}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 900
+                },
+                "restore": {
+                  "expect": {
+                    "method": {
+                      "mode": "chose",
+                      "label": "PATCH"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "label": "Gaspard's Attio OAuth connection (gaspard.l@morning.fr (Morning))",
+                      "data": {
+                        "scoped": "true",
+                        "connection": "attio2"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Attio: Rattacher le propriétaire",
+          "description": "Renseigne le champ « Propriétaire » de l'entrée créée. Passe entry_id et proprietaire_record_id (le record_id de la company du propriétaire, obtenu avec « Attio: Trouver ou créer l'entreprise »). N'appelle cet outil que si le propriétaire est explicitement nommé dans l'email.",
+          "flow": [
+            {
+              "id": 105,
+              "module": "attio:makeAnApiCall",
+              "version": 2,
+              "parameters": {
+                "__IMTCONN__": 10415895
+              },
+              "mapper": {
+                "url": "/v2/lists/a804bc1b-8ea3-44ee-8b17-505f918413aa/entries/{{83.entry_id}}",
+                "method": "PATCH",
+                "headers": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": "{\n  \"data\": {\n    \"entry_values\": {\n      \"proprietaire\": [\n        {\n          \"target_object\": \"companies\",\n          \"target_record_id\": \"{{83.proprietaire_record_id}}\"\n        }\n      ]\n    }\n  }\n}"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 900,
+                  "y": 1100
+                },
+                "restore": {
+                  "expect": {
+                    "method": {
+                      "mode": "chose",
+                      "label": "PATCH"
+                    }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "label": "Gaspard's Attio OAuth connection (gaspard.l@morning.fr (Morning))",
+                      "data": {
+                        "scoped": "true",
+                        "connection": "attio2"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "metadata": {
+        "designer": {
+          "x": 450,
+          "y": 0
+        },
+        "restore": {
+          "expect": {
+            "files": {
+              "mode": "chose"
+            },
+            "outputType": {
+              "label": "Text"
+            }
+          },
+          "parameters": {
+            "makeConnectionId": {
+              "label": "Gaspard's Make's AI Provider connection",
+              "data": {
+                "scoped": "true",
+                "connection": "ai-provider"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "instant": false,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": true,
+      "slots": null,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    }
+  }
+}
