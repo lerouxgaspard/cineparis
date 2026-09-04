@@ -232,12 +232,28 @@ pour valider le formulaire. Ce n'est pas un point technique isolé, ça touche t
 
 | # | Action | Où | Statut |
 |---|---|---|---|
-| 1 | Corriger la formule « Date dans : » (jours calendaires) | Airtable `Le Club` / `Plateaux repas` / `fldioRM7aMa6wmyFE` | à valider |
+| 1 | Corriger la formule « Date dans : » (jours calendaires) | Airtable `Le Club` / `Plateaux repas` / `fldioRM7aMa6wmyFE` | ✅ fait le 04/09 |
 | 1b | (option) Passer l'automation en planifiée à 9 h | Airtable automation `wflqOCNnIjoemKjic` | à arbitrer |
-| 2 | `Le bistronomique` : 45 → 40 | Make 5486620, module 8 | à valider |
-| 2b | Remettre les libellés de gammes à jour | Make 5518932, module 7 | à valider |
-| 2c | Total : `fld7AhKYd20IEl5vT` → `fld8HoxBzT5PU1f4s` | Make 5518932, mail | à valider |
+| 2 | `Le bistronomique` : 45 → 40 | Make 5486620, module 8 | à faire à la main |
+| 2b | Remettre les libellés de gammes à jour | Make 5518932, module 7 | à faire à la main |
+| 2c | Total : `fld7AhKYd20IEl5vT` → `fld8HoxBzT5PU1f4s` | Make 5518932, mail | à faire à la main |
 | 2d | Vérifier le calcul `u4X1` côté Fillout | Fillout | hors MCP, à faire à la main |
 | 3 | Compléter Saint-Augustin, Laffitte, Cadet | Airtable `Le Club` / `Espaces` | à valider |
 | 3b | Synchro RH → Espaces | nouveau scénario Make | à arbitrer |
 | 4 | Paiement CB | Fillout + process facturation | décision métier |
+
+---
+
+## Journal
+
+**04/09/2026 — appliqué en production**
+
+- ✅ Formule « Date dans : » (`fldioRM7aMa6wmyFE`) remplacée par une comparaison de jours
+  calendaires, et documentée dans la description du champ. Vérifié : Francis Aguey `-22` → `-23`,
+  Charlotte Marchand `-35` → `-36`, Camille Gutton reste à `3` (pas de ré-entrée dans la vue,
+  donc pas de mail parasite). Sa commande du 07/09 déclenchera le rappel le **dimanche 06/09**.
+
+**Non appliqué — connecteur Make en lecture seule**
+
+Les 3 corrections des scénarios Make sont à passer à la main, expressions exactes dans
+[`correctifs-make.md`](correctifs-make.md).
