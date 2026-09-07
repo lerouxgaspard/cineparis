@@ -234,9 +234,9 @@ pour valider le formulaire. Ce n'est pas un point technique isolé, ça touche t
 |---|---|---|---|
 | 1 | Corriger la formule « Date dans : » (jours calendaires) | Airtable `Le Club` / `Plateaux repas` / `fldioRM7aMa6wmyFE` | ✅ fait le 04/09 |
 | 1b | (option) Passer l'automation en planifiée à 9 h | Airtable automation `wflqOCNnIjoemKjic` | à arbitrer |
-| 2 | `Le bistronomique` : 45 → 40 | Make 5486620, module 8 | à faire à la main |
-| 2b | Remettre les libellés de gammes à jour | Make 5518932, module 7 | à faire à la main |
-| 2c | Total : `fld7AhKYd20IEl5vT` → `fld8HoxBzT5PU1f4s` | Make 5518932, mail | à faire à la main |
+| 2 | `Le bistronomique` : 45 → 40 | Make 5486620, module 8 | ✅ fait le 07/09 |
+| 2b | Remettre les libellés de gammes à jour | Make 5518932, module 7 | ✅ fait le 07/09 |
+| 2c | Total : `fld7AhKYd20IEl5vT` → `fld8HoxBzT5PU1f4s` | Make 5518932, mail | ✅ fait le 07/09 |
 | 2d | Vérifier le calcul `u4X1` côté Fillout | Fillout | hors MCP, à faire à la main |
 | 3 | Compléter Saint-Augustin, Laffitte, Cadet | Airtable `Le Club` / `Espaces` | à valider |
 | 3b | Synchro RH → Espaces | nouveau scénario Make | à arbitrer |
@@ -253,7 +253,27 @@ pour valider le formulaire. Ce n'est pas un point technique isolé, ça touche t
   Charlotte Marchand `-35` → `-36`, Camille Gutton reste à `3` (pas de ré-entrée dans la vue,
   donc pas de mail parasite). Sa commande du 07/09 déclenchera le rappel le **dimanche 06/09**.
 
-**Non appliqué — connecteur Make en lecture seule**
+**07/09/2026 — corrections Make appliquées par Gaspard, vérifiées dans les blueprints**
 
-Les 3 corrections des scénarios Make sont à passer à la main, expressions exactes dans
-[`correctifs-make.md`](correctifs-make.md).
+| Scénario | Modifié le | Vérification |
+|---|---|---|
+| 5486620 module 8 | 07/09 08:23 | `"Le bistronomique"; 40` ✅ |
+| 5518932 module 7 | 07/09 08:39 | les 4 libellés de gammes actuels, bistro à 40 ✅ |
+| 5518932 mail, total | 07/09 08:39 | `fldyb794vL3b3CKex + fldAlIfo3ygrvV6AH + fld8HoxBzT5PU1f4s` ✅ |
+
+Les deux scénarios sont actifs et valides (`isActive: true`, `isinvalid: false`).
+
+**07/09/2026 — le correctif J-1 est confirmé en production**
+
+Commande Camille Gutton (`recwH4jlyIV9ItOVT`), livraison lundi 07/09 à 12h30 :
+
+- exécution du scénario 5518932 le **05/09 à 22:26 UTC**, soit le **dimanche 06/09 à 00h26** heure de Paris → **J-1** ✅
+- avec l'ancienne formule, le champ serait passé à `1` le samedi 05/09 vers 12h30 → J-2
+- `Mail J-1` coché, `Date dans :` = 0 le jour de la livraison
+
+C'est la première commande passée après le correctif : le bug est réglé sur pièce, pas seulement
+en théorie. L'envoi juste après minuit est le comportement attendu de cette formule (`NOW()` se
+rafraîchit toutes les ~15 min) — c'est ce que corrigerait l'automation planifiée à 9 h.
+
+**Récapitulé sur Asana** : commentaire du 07/09 sur
+[V3 tech](https://app.asana.com/1/40297021214942/task/1218057167204961).
