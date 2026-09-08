@@ -1,5 +1,15 @@
 # Attribution agentique des leads « À la journée »
 
+> **En production depuis le 08/09/2026 09:55.** Scénario `7299000`
+> (`[PRD] [Attio] Attribution agentique - À la journée`), branché sur le webhook
+> historique `[DEV][JOURNEE_V3.1]` (hook `3456539`). L'ancien scénario `6720662` est
+> désactivé et son blueprint archivé dans `make/legacy-6720662.blueprint.json`.
+>
+> Première application réelle de la règle, à 09:56 : le lead *SDR// Acne Studios*
+> (15 000 €) est parti chez Jules au lieu de la rotation. Le lead précédent, traité
+> à 09:29 par l'ancien scénario, était parti en round robin avec un `score_prioritaire`
+> calculé puis ignoré.
+
 Remplace le scénario `[DEV] À la journée - Round Robin - Attribution + Valeur + Slack - Gaspard`
 (id `6720662`), dont la règle d'attribution n'a jamais existé.
 
@@ -156,10 +166,21 @@ Trois erreurs réelles ont été corrigées grâce à ces validations :
 `util:GetVariables` attend `variables` et non `names` ; `maxRecords` doit être un nombre
 et non une chaîne ; et le module Sleep ne peut pas dépasser 300 s.
 
-**Aucun des deux scénarios n'a été exécuté** — la connexion Make de la session est en
-lecture seule (pas de `scenarios_create`). Faites un **Run once** sur un deal de test
-avant d'activer, en particulier pour vérifier la forme réelle des réponses Attio
-(`values.<champ>[]`) utilisée dans les mappings.
+Le scénario d'attribution tourne désormais sur du trafic réel : la forme des réponses
+Attio (`values.<champ>[]`) est confirmée, tout comme le module Agent et la décision.
+
+Le scénario d'escalade (`7299041`), lui, **n'a jamais été exécuté** — à vérifier avant
+de l'activer : planification sur 5 minutes, et un premier passage à blanc pour contrôler
+la syntaxe du filtre Attio (`$not`, bornes `created_at`).
+
+### Reste à faire
+
+- `/invite @bidule` dans `#100àlajournée` : sans lui le post canal échoue, absorbé par le
+  handler `Ignore` — le run finit en `status: 2` au lieu de `1`. Y inviter aussi les
+  commerciaux, le canal n'ayant que 2 membres.
+- Arbitrer `dans_rotation` (voir §7).
+- Supprimer les webhooks devenus orphelins : `[DEV][JOURNEE_V3]` (`3456305`). Quatre hooks
+  aux noms voisins ont déjà causé une erreur de branchement lors de la bascule.
 
 ## 7. Le piège `dans_rotation`
 
