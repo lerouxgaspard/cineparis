@@ -50,7 +50,7 @@ Webhook
  → Merge → Get variables
  → Attio PATCH (owner, recurrence_detected, value)
  → Airtable Update (dernier_lead_daily = now)
- → Slack DM au commercial
+ → Slack SearchUser (identifiant du commercial, pour la mention)
  → Attio POST tâche « Nouveau deal entrant - Call prise de brief »
  → Slack post #100sdr   [error handler: Ignore]
 ```
@@ -189,12 +189,19 @@ webhook 15 minutes empilerait les exécutions.
 
 ### Ordre des notifications et tolérance aux pannes
 
-Le DM au commercial et la tâche Attio passent **avant** le post canal, et seul le post
-canal porte un handler `Ignore`. Raison : au premier run, l'échec Slack sur le canal a
-interrompu le scénario alors que le deal était déjà assigné (module 13) et la rotation
-déjà consommée (module 14) — le lead s'est retrouvé attribué, sans tâche et sans réponse
-webhook. Le DM et la tâche sont le coeur du dispositif et doivent échouer bruyamment ;
-la diffusion sur le canal est du confort et ne doit plus rien bloquer.
+La tâche Attio passe **avant** le post canal, et seul le post canal porte un handler
+`Ignore`. Raison : au premier run, l'échec Slack sur le canal a interrompu le scénario
+alors que le deal était déjà assigné (module 13) et la rotation déjà consommée
+(module 14) — le lead s'est retrouvé attribué, sans tâche et sans réponse webhook.
+L'assignation et la tâche sont le coeur du dispositif et doivent échouer bruyamment ;
+la diffusion sur le canal ne doit plus rien bloquer.
+
+**Pas de DM au commercial.** Le module a été retiré le 08/09 : il posait des erreurs à
+répétition et le canal `#100sdr` suffit. La mention `<@id>` dans le message canal notifie
+la personne concernée comme le ferait un DM, donc la règle des 5 minutes reste tenable.
+Le message canal a repris ce que portait le DM — valeur, mode d'attribution, détection de
+récurrence, justification de l'agent et rappel du délai. Le module `SearchUser` reste
+nécessaire : c'est lui qui fournit l'identifiant Slack utilisé par la mention.
 
 ## 5. Import
 

@@ -356,43 +356,11 @@ def build():
         "metadata": designer(3900, 0, "Slack - Trouver le commercial"),
     })
 
-    # 16 — Slack : message direct
-    dm_blocks = json.dumps({"blocks": [
-        {"type": "header", "text": {"type": "plain_text",
-                                    "text": ":rotating_light: Nouveau lead pour toi",
-                                    "emoji": True}},
-        {"type": "section", "fields": [
-            {"type": "mrkdwn", "text": "*Produit :*\n{{2.body.data.values.type_de_ressource[].option.title}}"},
-            {"type": "mrkdwn", "text": "*Participants :*\n{{ifempty(2.body.data.values.pax[].value; \"non précisé\")}}"},
-            {"type": "mrkdwn", "text": "*Date :*\n{{ifempty(2.body.data.values.date_start_deal_daily[].value; \"à préciser\")}}"},
-            {"type": "mrkdwn", "text": "*Société :*\n{{ifempty(2.body.data.values.name[].value; \"inconnue\")}}"},
-            {"type": "mrkdwn", "text": "*Valeur estimée :*\n{{7.deal_value}} EUR"},
-            {"type": "mrkdwn", "text": "*Attribution :*\n{{12.attribution_mode}}"},
-        ]},
-        {"type": "context", "elements": [
-            {"type": "mrkdwn", "text": ":robot_face: {{6.jsonResponse.justification}}"}]},
-        {"type": "actions", "elements": [
-            {"type": "button", "text": {"type": "plain_text", "text": "Ouvrir le deal", "emoji": True},
-             "url": "{{2.body.data.web_url}}",
-             "style": "primary"}]},
-        {"type": "context", "elements": [
-            {"type": "mrkdwn", "text": ":stopwatch: *À traiter en moins de 5 minutes* — réagis à ce message."}]},
-    ]}, ensure_ascii=False, indent=1)
-    flow.append({
-        "id": 16,
-        "module": "slack:CreateMessage",
-        "version": 4,
-        "parameters": {"__IMTCONN__": CONN_SLACK},
-        "mapper": {
-            "parse": False, "mrkdwn": True, "link_names": True,
-            # Make normalise ce module en « Enter manually » : pas de channelType,
-            # et l'ID utilisateur renvoyé par SearchUser suffit — Slack ouvre le DM.
-            "channel": "{{15.id}}", "channelWType": "manualy",
-            "blocks": dm_blocks,
-            "text": "Nouveau lead à traiter en moins de 5 minutes",
-        },
-        "metadata": designer(4200, 0, "Slack - DM au commercial"),
-    })
+    # Pas de DM au commercial : retiré le 08/09, le canal #100sdr suffit et le
+    # module posait des erreurs à répétition. La mention <@id> dans le message
+    # canal notifie déjà la personne concernée, donc la règle des 5 minutes
+    # reste tenable. Le module SearchUser (15) est conservé : c'est lui qui
+    # fournit l'identifiant Slack utilisé par la mention.
 
     # 18 — Attio : tâche liée AU BON deal
     task_body = (
@@ -412,18 +380,29 @@ def build():
 
     # 17 — Slack : notification canal
     chan_blocks = json.dumps({"blocks": [
+        {"type": "header", "text": {"type": "plain_text",
+                                    "text": ":rotating_light: Nouveau lead à la journée",
+                                    "emoji": True}},
         {"type": "section", "text": {"type": "mrkdwn",
-         "text": ":new: *Nouveau lead pour <@{{15.id}}>* — {{12.attribution_mode}}"}},
+         "text": "*Pour <@{{15.id}}>* — attribution : {{12.attribution_mode}}"}},
         {"type": "section", "fields": [
             {"type": "mrkdwn", "text": "*Produit :*\n{{2.body.data.values.type_de_ressource[].option.title}}"},
             {"type": "mrkdwn", "text": "*Participants :*\n{{ifempty(2.body.data.values.pax[].value; \"non précisé\")}}"},
             {"type": "mrkdwn", "text": "*Date :*\n{{ifempty(2.body.data.values.date_start_deal_daily[].value; \"à préciser\")}}"},
             {"type": "mrkdwn", "text": "*Société :*\n{{ifempty(2.body.data.values.name[].value; \"inconnue\")}}"},
+            {"type": "mrkdwn", "text": "*Valeur estimée :*\n{{7.deal_value}} EUR"},
+            {"type": "mrkdwn", "text": "*Récurrent :*\n{{if(7.recurrence; \"oui\"; \"non\")}}"},
         ]},
+        {"type": "context", "elements": [
+            {"type": "mrkdwn", "text": ":robot_face: {{6.jsonResponse.justification}}"}]},
         {"type": "actions", "elements": [
-            {"type": "button", "text": {"type": "plain_text", "text": "Voir le deal", "emoji": True},
-             "url": "{{2.body.data.web_url}}"}]},
+            {"type": "button", "text": {"type": "plain_text", "text": "Ouvrir le deal", "emoji": True},
+             "url": "{{2.body.data.web_url}}", "style": "primary"}]},
+        {"type": "context", "elements": [
+            {"type": "mrkdwn",
+             "text": ":stopwatch: *À traiter en moins de 5 minutes* — réagis à ce message."}]},
     ]}, ensure_ascii=False, indent=1)
+
     flow.append({
         "id": 17,
         "module": "slack:CreateMessage",
