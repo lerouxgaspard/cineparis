@@ -277,3 +277,63 @@ rafraîchit toutes les ~15 min) — c'est ce que corrigerait l'automation planif
 
 **Récapitulé sur Asana** : commentaire du 07/09 sur
 [V3 tech](https://app.asana.com/1/40297021214942/task/1218057167204961).
+
+---
+
+## Sous-tâche « tous les MM en collaborateurs » — diagnostic corrigé (07/09)
+
+⚠️ **Le diagnostic du 04/09 était faux sur ce point.** Il disait que « Asana_User ID » était un
+champ texte saisi à la main, incomplet sur 3 espaces. Ce n'est pas le cas.
+
+### La vraie chaîne
+
+```
+Le Club / Espaces                      table SYNCHRONISÉE → non éditable
+  ↑ sync
+BASE_Data des espaces (appy0jxTXyBp3DOA9)   ← connecteur en LECTURE SEULE
+  └─ Espaces / Asana_User ID          lookup via le lien « manager » →
+       Team / Asana User ID           ⚠️ « Ne pas modifier ce champ »
+         ↑ alimenté par
+       Automation « People Nouveau profil - get asana user ID » (wflPwOE6kyvzKBppZ)
+         déclencheur : recordUpdated, watchFields = [ Email ]
+         condition   : email non vide ET contient "morning"
+         script      : GET app.asana.com/api/1.0/users/{email} → data.gid
+         action      : écrit le gid dans Team / Asana User ID
+```
+
+« Email (from Morning Managers) » et « Asana_User ID » sont **deux lookups sur le même lien
+`manager`**. Donc un MM dont l'email apparaît sur l'espace mais pas l'ID Asana est bien rattaché :
+c'est son `Asana User ID` côté Team qui est vide, et le lookup le laisse tomber silencieusement.
+
+### La cause racine
+
+Le déclencheur ne surveille que la **mise à jour** du champ Email. Une fiche **créée** avec l'email
+déjà rempli — ce que fait le formulaire « Création de profil » sur cette même table — ne déclenche
+rien : une création n'est pas une mise à jour.
+
+Portée mesurée : **60 fiches** non-inactives, email `@morning.fr`, `Asana User ID` vide.
+Dont 3 avec le rôle MM : **Antoine SCOGNAMIGLIO**, **Clémence DUTREIL**, **Adrien AILLAUD**.
+Gaspard LEROUX lui-même en fait partie, alors que son compte Asana existe.
+
+### Correctifs
+
+| Personne | Email RH | Compte Asana correspondant | Action |
+|---|---|---|---|
+| Antoine SCOGNAMIGLIO | `antoine.scognamiglio@morning.fr` | ✅ `1213965829698471` | ré-enregistrer l'email → l'automatisation remplit l'ID. Règle Saint-Augustin **et** Cadet. |
+| Clémence DUTREIL | `clemence.d@morning.fr` | ✅ `1217535514431757` | idem |
+| Adrien AILLAUD | `conciergerie-laffitte@morning.fr` | ❌ aucun (son compte est `adrien@morning.fr` → `1207455401205853`) | échouera tant que l'email RH est une boîte fonctionnelle. Décision métier : il est **Assistant MM**, et d'après Gaspard il n'a pas à être sur ces tâches → ne rien faire. |
+
+Ré-enregistrer l'email est le geste propre : il passe par le mécanisme prévu, sans écrire dans un
+champ marqué « ne pas modifier ». Aucun de ces gestes n'est possible depuis ce connecteur
+(lecture seule sur `BASE_Data des espaces`).
+
+**Laffitte n'a rien à corriger** : ses 3 MM (Cloé, Lila, Rania) sont bien ajoutés en collaborateurs,
+et Adrien ne l'est pas — c'est le comportement voulu. L'« écart 3 ID / 4 emails » signalé le 04/09
+n'était pas un bug.
+
+### Correctif de fond (V3.1)
+
+L'automatisation devrait aussi se déclencher **à la création** de la fiche, ou être doublée d'une
+automatisation planifiée qui balaie les fiches à `Asana User ID` vide. Sans ça, chaque nouvelle
+arrivée dont l'email est saisi à la création reste invisible pour toutes les automatisations Asana —
+pas seulement les plateaux repas.
