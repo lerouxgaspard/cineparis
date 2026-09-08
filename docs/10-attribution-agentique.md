@@ -74,9 +74,34 @@ module 2. L'ancien scénario en attendait neuf (`type_ressource`, `pax`, `durati
 `company_name`, `date_start`, `existing_value`, `recurrence_frequency`,
 `attio_record_url`, `deal_id`).
 
-L'émetteur reste à documenter : il n'a jamais été identifié formellement. C'est
-l'historique d'exécutions de `6720662` qui a permis d'établir que le trafic arrive sur le
-hook `3456539` (`[DEV][JOURNEE_V3.1]`), sans dire qui l'émet.
+### L'émetteur
+
+Une **automatisation Attio**, identifiée le 08/09 en balayant les 207 workflows du
+workspace : la chaîne `hrdajsneljw` n'apparaît que là.
+
+| | |
+|---|---|
+| Nom | `[Daily] Round Robin - Nouveau lead à la journée - Gaspard` |
+| ID | `52251a93-7af5-46f0-b1b7-3d1fd3fcd8a6` |
+| Objet | `deals_daily` |
+| Déclencheur | `on-record-created` — création d'enregistrement, sans condition |
+| Filtre | `Type de ressource` ≠ « Coworking à la journée » **ET** `Deal stage` ≠ « Won » |
+| Action | `POST https://hook.eu1.make.com/hrdajsneljwbkgycby1aqdx8mhh2lykt` |
+| Statut | Live · 468 exécutions cumulées |
+
+Elle envoie **neuf champs** — `deal_id`, `pax`, `duration`, `date_start`, `company_name`,
+`existing_value`, `type_ressource`, `attio_record_url`, `recurrence_frequency` — hérités
+de l'ancien scénario. Le nouveau n'en consomme qu'un, `deal_id`, et relit le reste depuis
+Attio. Les huit autres peuvent rester : les retirer ne gagnerait rien et casserait
+l'ancien scénario si quelqu'un le réactivait.
+
+**Le filtre « Coworking à la journée » existe donc en double**, côté Attio et dans le
+module 3. Ce n'est pas une erreur : le doublon protège si la condition Attio saute, et le
+module 3 porte en plus le garde-fou `admin_automation_stop`, absent côté Attio.
+
+**Le nom de l'automatisation ment.** Elle s'appelle « Round Robin » alors qu'elle
+alimente désormais l'attribution agentique. À renommer avant que quelqu'un ne cherche un
+round robin dans Attio.
 
 **Jules reste dans le round robin.** Le PDF disait de l'en exclure ; la consigne retenue est
 l'inverse. L'équilibre se fait tout seul : `dernier_lead_daily` est mis à jour pour l'assigné
