@@ -1,0 +1,581 @@
+{
+  "name": "[PRD] [Attio] Attribution agentique - À la journée",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {},
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0,
+          "name": "Nouveau lead à la journée"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "parameters": {
+        "__IMTCONN__": 3292919
+      },
+      "mapper": {
+        "url": "/v2/objects/deals_daily/records/{{1.deal_id}}",
+        "method": "GET",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0,
+          "name": "Attio - Lire le deal"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "parameters": {
+        "__IMTCONN__": 3292919
+      },
+      "mapper": {
+        "url": "/v2/notes?limit=25&parent_object=deals_daily&parent_record_id={{1.deal_id}}",
+        "method": "GET",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0,
+          "name": "Attio - Lire les notes"
+        }
+      },
+      "filter": {
+        "name": "Lead traitable par un commercial",
+        "conditions": [
+          [
+            {
+              "a": "{{2.body.data.values.type_de_ressource[].option.title}}",
+              "o": "text:notequal",
+              "b": "Coworking à la journée"
+            },
+            {
+              "a": "{{2.body.data.values.admin_automation_stop[].option.title}}",
+              "o": "text:notequal",
+              "b": "Yes"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 2426866
+      },
+      "mapper": {
+        "base": "app1ZLIN13lGG0cPE",
+        "table": "tbl362A2eveuwpuBE",
+        "formula": "AND({actif}=1, OR({est_absent}=0, {est_absent}=BLANK()))",
+        "maxRecords": 20,
+        "sort": [
+          {
+            "field": "dernier_lead_daily",
+            "direction": "asc"
+          }
+        ],
+        "useColumnId": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 900,
+          "y": 0,
+          "name": "Airtable - Pool commerciaux"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "module": "builtin:BasicAggregator",
+      "version": 1,
+      "parameters": {
+        "feeder": 4
+      },
+      "mapper": {
+        "id": "{{4.id}}",
+        "name": "{{4.name}}",
+        "mail": "{{4.mail}}",
+        "attio_user_id": "{{4.attio_user_id}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 1200,
+          "y": 0,
+          "name": "Pool agrégé"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "module": "ai-local-agent:RunLocalAIAgent",
+      "version": 0,
+      "parameters": {
+        "makeConnectionId": 9767251
+      },
+      "mapper": {
+        "systemPrompt": "Tu es un assistant de qualification de leads pour Morning, un opérateur d'espaces de travail. Tu analyses UN lead entrant sur l'offre « à la journée » (coworking, bureau à la journée, salle de réunion / SDR).\n\nTon unique travail est de LIRE et de RESTITUER des faits. Tu ne choisis pas de commercial : l'attribution est décidée par une règle en aval.\n\nTu reçois les champs structurés du deal et le texte libre des notes qui y sont rattachées. Tu dois produire :\n\n1. recurrence_detected — true si, et seulement si, le texte ou les champs indiquent un besoin QUI SE RÉPÈTE dans le temps : « toutes les semaines », « tous les mois », « chaque mardi », « récurrent », « abonnement », « contrat cadre », « on reviendra régulièrement », « x fois par mois ».\n   Une réservation unique portant sur plusieurs jours consécutifs n'est PAS récurrente. Un simple « on reviendra peut-être » n'est PAS récurrent. Dans le doute, réponds false.\n\n2. recurrence_frequency — l'une de : Hebdomadaire, Mensuel, Annuel, Ponctuel, A qualifier. Mets « A qualifier » si recurrence_detected est true mais que la fréquence n'est pas explicite.\n\n3. valeur_estimee — la valeur en euros. Utilise le champ « value » du deal s'il est renseigné et supérieur à 0. Sinon, et seulement sinon, estime à partir du nombre de participants, de la durée et du type de ressource, et signale-le dans la justification. Ne renvoie jamais null : renvoie 0 si tu ne peux rien estimer.\n\n4. confiance — de 0 à 100, ta confiance dans recurrence_detected.\n\n5. justification — deux phrases maximum, en français. Si recurrence_detected est true, CITE la phrase exacte du texte qui le prouve, entre guillemets. Si tu n'as rien trouvé, écris « aucun indice de récurrence dans les notes ». N'invente jamais une citation.\n\nRègle absolue : n'affirme rien qui ne soit pas dans les données fournies. Si une information manque, dis qu'elle manque.",
+        "message": "### Champs du deal\n- Record ID : {{1.deal_id}}\n- Nom : {{2.body.data.values.name[].value}}\n- Type de ressource : {{2.body.data.values.type_de_ressource[].option.title}}\n- Type d'offre : {{2.body.data.values.type_offre_daily[].option.title}}\n- Valeur (champ « value ») : {{2.body.data.values.value[].currency_value}} EUR\n- Participants (pax) : {{2.body.data.values.pax[].value}}\n- Durée (jours) : {{2.body.data.values.duration_deal_daily[].value}}\n- Date de début : {{2.body.data.values.date_start_deal_daily[].value}}\n- Fréquence déjà saisie : {{2.body.data.values.recurrence_frequency[].option.title}}\n- Case « récurrent » déjà cochée : {{2.body.data.values.recurrence_detected[].value}}\n\n### Notes rattachées (texte libre)\n{{join(map(3.body.data; \"content_plaintext\"); \"\n\n---\n\n\")}}\n\nAnalyse ce lead et renvoie la structure demandée.",
+        "outputType": "make-schema",
+        "outputSchema": [
+          {
+            "name": "recurrence_detected",
+            "type": "boolean",
+            "label": "Besoin récurrent détecté",
+            "required": true
+          },
+          {
+            "name": "recurrence_frequency",
+            "type": "text",
+            "label": "Fréquence",
+            "multiline": false,
+            "required": false
+          },
+          {
+            "name": "valeur_estimee",
+            "type": "number",
+            "label": "Valeur estimée (EUR)",
+            "required": true
+          },
+          {
+            "name": "confiance",
+            "type": "number",
+            "label": "Confiance (0-100)",
+            "required": false
+          },
+          {
+            "name": "justification",
+            "type": "text",
+            "label": "Justification",
+            "multiline": true,
+            "required": true
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 1500,
+          "y": 0,
+          "name": "Agent - Lecture du besoin"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "module": "util:SetVariables",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "variables": [
+          {
+            "name": "deal_value",
+            "value": "{{ifempty(get(first(2.body.data.values.value); \"currency_value\"); ifempty(6.jsonResponse.valeur_estimee; 0))}}"
+          },
+          {
+            "name": "recurrence",
+            "value": "{{ifempty(6.jsonResponse.recurrence_detected; false)}}"
+          },
+          {
+            "name": "rr_id",
+            "value": "{{first(map(5.array; \"attio_user_id\"))}}"
+          },
+          {
+            "name": "rr_rec",
+            "value": "{{first(map(5.array; \"id\"))}}"
+          },
+          {
+            "name": "rr_mail",
+            "value": "{{first(map(5.array; \"mail\"))}}"
+          },
+          {
+            "name": "rr_name",
+            "value": "{{first(map(5.array; \"name\"))}}"
+          }
+        ],
+        "scope": "roundtrip"
+      },
+      "metadata": {
+        "designer": {
+          "x": 1800,
+          "y": 0,
+          "name": "Normalisation"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "module": "builtin:BasicIfElse",
+      "version": 1,
+      "mapper": null,
+      "metadata": {
+        "designer": {
+          "x": 2100,
+          "y": 0,
+          "name": "Décision d'attribution"
+        }
+      },
+      "branches": [
+        {
+          "merge": true,
+          "label": "Prioritaire (> 5000 EUR ou récurrent) -> Jules",
+          "type": "condition",
+          "conditions": [
+            [
+              {
+                "a": "{{7.deal_value}}",
+                "o": "number:greater",
+                "b": "5000"
+              }
+            ],
+            [
+              {
+                "a": "{{7.recurrence}}",
+                "o": "boolean:equal",
+                "b": "true"
+              }
+            ]
+          ],
+          "flow": [
+            {
+              "id": 9,
+              "module": "util:SetVariables",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "variables": [
+                  {
+                    "name": "assignee_id",
+                    "value": "e1ddf2ca-504e-4510-b53d-1d7fb16d9f96"
+                  },
+                  {
+                    "name": "assignee_rec",
+                    "value": "{{first(map(5.array; \"id\"; \"attio_user_id\"; \"e1ddf2ca-504e-4510-b53d-1d7fb16d9f96\"))}}"
+                  },
+                  {
+                    "name": "assignee_mail",
+                    "value": "jules.b@morning.fr"
+                  },
+                  {
+                    "name": "assignee_name",
+                    "value": "Jules Bornhauser"
+                  },
+                  {
+                    "name": "attribution_mode",
+                    "value": "Prioritaire"
+                  }
+                ],
+                "scope": "roundtrip"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 2400,
+                  "y": -150,
+                  "name": "Attribution Jules"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "merge": true,
+          "disabled": false,
+          "label": "Round robin",
+          "type": "else",
+          "flow": [
+            {
+              "id": 10,
+              "module": "util:SetVariables",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "variables": [
+                  {
+                    "name": "assignee_id",
+                    "value": "{{7.rr_id}}"
+                  },
+                  {
+                    "name": "assignee_rec",
+                    "value": "{{7.rr_rec}}"
+                  },
+                  {
+                    "name": "assignee_mail",
+                    "value": "{{7.rr_mail}}"
+                  },
+                  {
+                    "name": "assignee_name",
+                    "value": "{{7.rr_name}}"
+                  },
+                  {
+                    "name": "attribution_mode",
+                    "value": "Round robin"
+                  }
+                ],
+                "scope": "roundtrip"
+              },
+              "metadata": {
+                "designer": {
+                  "x": 2400,
+                  "y": 150,
+                  "name": "Attribution rotation"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "module": "builtin:BasicMerge",
+      "version": 1,
+      "mapper": null,
+      "metadata": {
+        "designer": {
+          "x": 2700,
+          "y": 0
+        }
+      },
+      "outputs": [],
+      "filters": [
+        null,
+        null
+      ]
+    },
+    {
+      "id": 12,
+      "module": "util:GetVariables",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "variables": [
+          "assignee_id",
+          "assignee_rec",
+          "assignee_mail",
+          "assignee_name",
+          "attribution_mode"
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 3000,
+          "y": 0,
+          "name": "Assigné retenu"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "parameters": {
+        "__IMTCONN__": 3292919
+      },
+      "mapper": {
+        "url": "/v2/objects/deals_daily/records/{{1.deal_id}}",
+        "method": "PATCH",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": "{\"data\":{\"values\":{\"owner\":[{\"referenced_actor_type\":\"workspace-member\",\"referenced_actor_id\":\"{{12.assignee_id}}\"}],\"recurrence_detected\":[{\"value\":{{7.recurrence}}}],\"value\":[{\"currency_value\":{{7.deal_value}}}]}}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 3300,
+          "y": 0,
+          "name": "Attio - Assigner le deal"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "module": "airtable:ActionUpdateRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 2426866
+      },
+      "mapper": {
+        "id": "{{12.assignee_rec}}",
+        "base": "app1ZLIN13lGG0cPE",
+        "table": "tbl362A2eveuwpuBE",
+        "record": {
+          "fldmq0SDLFYe3gJoS": "{{now}}"
+        },
+        "typecast": false,
+        "useColumnId": true
+      },
+      "metadata": {
+        "designer": {
+          "x": 3600,
+          "y": 0,
+          "name": "Airtable - Fin de rotation"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "module": "slack:SearchUser",
+      "version": 4,
+      "parameters": {
+        "__IMTCONN__": 53760
+      },
+      "mapper": {
+        "email": "{{12.assignee_mail}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 3900,
+          "y": 0,
+          "name": "Slack - Trouver le commercial"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "module": "slack:CreateMessage",
+      "version": 4,
+      "parameters": {
+        "__IMTCONN__": 53760
+      },
+      "mapper": {
+        "parse": false,
+        "mrkdwn": true,
+        "link_names": true,
+        "channel": "{{15.id}}",
+        "channelType": "im",
+        "channelWType": "map",
+        "blocks": "{\n \"blocks\": [\n  {\n   \"type\": \"header\",\n   \"text\": {\n    \"type\": \"plain_text\",\n    \"text\": \":rotating_light: Nouveau lead pour toi\",\n    \"emoji\": true\n   }\n  },\n  {\n   \"type\": \"section\",\n   \"fields\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Produit :*\\n{{2.body.data.values.type_de_ressource[].option.title}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Participants :*\\n{{ifempty(2.body.data.values.pax[].value; \\\"non précisé\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Date :*\\n{{ifempty(2.body.data.values.date_start_deal_daily[].value; \\\"à préciser\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Société :*\\n{{ifempty(2.body.data.values.name[].value; \\\"inconnue\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Valeur estimée :*\\n{{7.deal_value}} EUR\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Attribution :*\\n{{12.attribution_mode}}\"\n    }\n   ]\n  },\n  {\n   \"type\": \"context\",\n   \"elements\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \":robot_face: {{6.jsonResponse.justification}}\"\n    }\n   ]\n  },\n  {\n   \"type\": \"actions\",\n   \"elements\": [\n    {\n     \"type\": \"button\",\n     \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \"Ouvrir le deal\",\n      \"emoji\": true\n     },\n     \"url\": \"https://app.attio.com/morning/deals_daily/record/{{1.deal_id}}\",\n     \"style\": \"primary\"\n    }\n   ]\n  },\n  {\n   \"type\": \"context\",\n   \"elements\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \":stopwatch: *À traiter en moins de 5 minutes* — réagis à ce message.\"\n    }\n   ]\n  }\n ]\n}",
+        "text": "Nouveau lead à traiter en moins de 5 minutes"
+      },
+      "metadata": {
+        "designer": {
+          "x": 4200,
+          "y": 0,
+          "name": "Slack - DM au commercial"
+        }
+      }
+    },
+    {
+      "id": 17,
+      "module": "slack:CreateMessage",
+      "version": 4,
+      "parameters": {
+        "__IMTCONN__": 53760
+      },
+      "mapper": {
+        "parse": false,
+        "mrkdwn": true,
+        "link_names": true,
+        "channel": "C0ARC9N68F2",
+        "channelType": "public",
+        "channelWType": "list",
+        "blocks": "{\n \"blocks\": [\n  {\n   \"type\": \"section\",\n   \"text\": {\n    \"type\": \"mrkdwn\",\n    \"text\": \":new: *Nouveau lead pour <@{{15.id}}>* — {{12.attribution_mode}}\"\n   }\n  },\n  {\n   \"type\": \"section\",\n   \"fields\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Produit :*\\n{{2.body.data.values.type_de_ressource[].option.title}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Participants :*\\n{{ifempty(2.body.data.values.pax[].value; \\\"non précisé\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Date :*\\n{{ifempty(2.body.data.values.date_start_deal_daily[].value; \\\"à préciser\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Société :*\\n{{ifempty(2.body.data.values.name[].value; \\\"inconnue\\\")}}\"\n    }\n   ]\n  },\n  {\n   \"type\": \"actions\",\n   \"elements\": [\n    {\n     \"type\": \"button\",\n     \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \"Voir le deal\",\n      \"emoji\": true\n     },\n     \"url\": \"https://app.attio.com/morning/deals_daily/record/{{1.deal_id}}\"\n    }\n   ]\n  }\n ]\n}",
+        "text": "Nouveau lead à la journée"
+      },
+      "metadata": {
+        "designer": {
+          "x": 4500,
+          "y": 0,
+          "name": "Slack - #100alajournee"
+        }
+      }
+    },
+    {
+      "id": 18,
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "parameters": {
+        "__IMTCONN__": 3292919
+      },
+      "mapper": {
+        "url": "/v2/tasks",
+        "method": "POST",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": "{\"data\":{\"content\":\"Nouveau deal entrant - Call prise de brief\",\"format\":\"plaintext\",\"deadline_at\":\"{{formatDate(now; \\\"YYYY-MM-DDTHH:mm:ssZ\\\")}}\",\"is_completed\":false,\"linked_records\":[{\"target_object\":\"deals_daily\",\"target_record_id\":\"{{1.deal_id}}\"}],\"assignees\":[{\"referenced_actor_type\":\"workspace-member\",\"referenced_actor_id\":\"{{12.assignee_id}}\"}]}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 4800,
+          "y": 0,
+          "name": "Attio - Créer la tâche"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "module": "gateway:WebhookRespond",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "status": "200",
+        "body": "{\"ok\":true,\"deal_id\":\"{{1.deal_id}}\",\"assignee\":\"{{12.assignee_mail}}\",\"mode\":\"{{12.attribution_mode}}\",\"value\":{{7.deal_value}},\"recurrence\":{{7.recurrence}}}",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 5100,
+          "y": 0,
+          "name": "Réponse"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "slots": null,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "eu1.make.com",
+    "notes": []
+  }
+}
