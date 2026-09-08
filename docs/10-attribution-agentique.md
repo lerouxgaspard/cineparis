@@ -40,8 +40,9 @@ Webhook
  → Merge → Get variables
  → Attio PATCH (owner, recurrence_detected, value)
  → Airtable Update (dernier_lead_daily = now)
- → Slack DM au commercial + post #100àlajournée
+ → Slack DM au commercial
  → Attio POST tâche « Nouveau deal entrant - Call prise de brief »
+ → Slack post #100àlajournée   [error handler: Ignore]
  → Webhook respond
 ```
 
@@ -104,7 +105,20 @@ webhook 15 minutes empilerait les exécutions.
 1. ~~Créer la checkbox `escalade_envoyee`~~ — **fait**, vérifié via le connecteur :
    `d84fdbbb-7e6b-4a0c-8e3d-6f85de9dfa4b`, slug `escalade_envoyee`, type checkbox,
    écrivable, non requis.
-2. Vérifier que **Robot Bidule** est bien invité dans `#100àlajournée`.
+2. **Inviter Robot Bidule dans `#100àlajournée`** (`/invite @bidule`). Vérifié le 08/09 :
+   le canal `C0ARC9N68F2` ne comptait que 2 membres (JB Dufour, Maria), sans le bot —
+   d'où l'échec `not_in_channel` au premier run. Y inviter aussi les commerciaux, Jules
+   en tête : il n'y était pas non plus, alors que c'est lui qui reçoit les leads
+   prioritaires et les escalades.
+
+### Ordre des notifications et tolérance aux pannes
+
+Le DM au commercial et la tâche Attio passent **avant** le post canal, et seul le post
+canal porte un handler `Ignore`. Raison : au premier run, l'échec Slack sur le canal a
+interrompu le scénario alors que le deal était déjà assigné (module 13) et la rotation
+déjà consommée (module 14) — le lead s'est retrouvé attribué, sans tâche et sans réponse
+webhook. Le DM et la tâche sont le coeur du dispositif et doivent échouer bruyamment ;
+la diffusion sur le canal est du confort et ne doit plus rien bloquer.
 
 ## 5. Import
 

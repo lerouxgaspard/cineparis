@@ -372,6 +372,22 @@ def build():
         "metadata": designer(4200, 0, "Slack - DM au commercial"),
     })
 
+    # 18 — Attio : tâche liée AU BON deal
+    task_body = (
+        '{"data":{'
+        '"content":"Nouveau deal entrant - Call prise de brief",'
+        '"format":"plaintext",'
+        '"deadline_at":"{{formatDate(now; \\"YYYY-MM-DDTHH:mm:ssZ\\")}}",'
+        '"is_completed":false,'
+        '"linked_records":[{"target_object":"' + ATTIO_OBJECT + '",'
+        '"target_record_id":"{{1.deal_id}}"}],'
+        '"assignees":[{"referenced_actor_type":"workspace-member",'
+        '"referenced_actor_id":"{{12.assignee_id}}"}]}}'
+    )
+    flow.append(attio_call(
+        18, 4500, "/v2/tasks", "POST", body=task_body,
+        name="Attio - Créer la tâche"))
+
     # 17 — Slack : notification canal
     chan_blocks = json.dumps({"blocks": [
         {"type": "section", "text": {"type": "mrkdwn",
@@ -398,24 +414,20 @@ def build():
             "blocks": chan_blocks,
             "text": "Nouveau lead à la journée",
         },
-        "metadata": designer(4500, 0, "Slack - #100alajournee"),
+        "metadata": designer(4800, 0, "Slack - #100alajournee"),
+        # Le DM au commercial (16) et la tâche Attio (18) sont le coeur du flux :
+        # s'ils échouent, le scénario DOIT échouer bruyamment. Le post canal est
+        # une diffusion de confort — un bot désinvité ou un canal archivé ne doit
+        # pas laisser un deal assigné sans tâche, comme c'est arrivé le 08/09.
+        "onerror": [{
+            "id": 20,
+            "module": "builtin:Ignore",
+            "version": 1,
+            "parameters": {},
+            "mapper": {},
+            "metadata": designer(4800, 150, "Ignorer l'échec de diffusion"),
+        }],
     })
-
-    # 18 — Attio : tâche liée AU BON deal
-    task_body = (
-        '{"data":{'
-        '"content":"Nouveau deal entrant - Call prise de brief",'
-        '"format":"plaintext",'
-        '"deadline_at":"{{formatDate(now; \\"YYYY-MM-DDTHH:mm:ssZ\\")}}",'
-        '"is_completed":false,'
-        '"linked_records":[{"target_object":"' + ATTIO_OBJECT + '",'
-        '"target_record_id":"{{1.deal_id}}"}],'
-        '"assignees":[{"referenced_actor_type":"workspace-member",'
-        '"referenced_actor_id":"{{12.assignee_id}}"}]}}'
-    )
-    flow.append(attio_call(
-        18, 4800, "/v2/tasks", "POST", body=task_body,
-        name="Attio - Créer la tâche"))
 
     # 19 — Réponse au webhook
     flow.append({
