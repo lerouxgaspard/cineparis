@@ -59,7 +59,7 @@ LIGNE = (
     "{{ifempty(first(map(3.array; \"name\"; \"attio_user_id\"; "
     "first(map(4.values.owner; \"referenced_actor_id\")))); \"non attribué\")}} — "
     "créé à {{formatDate(4.values.created_at[].value; \"HH:mm\"; \"Europe/Paris\")}} — "
-    "<https://app.attio.com/morning/deals_daily/record/{{4.id.record_id}}|ouvrir>"
+    "<https://app.attio.com/morning-prod/custom/deals_daily/record/{{4.id.record_id}}|ouvrir>"
 )
 
 DIGEST_BLOCKS = json.dumps({"blocks": [

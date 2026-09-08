@@ -373,7 +373,7 @@ def build():
             {"type": "mrkdwn", "text": ":robot_face: {{6.jsonResponse.justification}}"}]},
         {"type": "actions", "elements": [
             {"type": "button", "text": {"type": "plain_text", "text": "Ouvrir le deal", "emoji": True},
-             "url": "https://app.attio.com/morning/deals_daily/record/{{1.deal_id}}",
+             "url": "{{2.body.data.web_url}}",
              "style": "primary"}]},
         {"type": "context", "elements": [
             {"type": "mrkdwn", "text": ":stopwatch: *À traiter en moins de 5 minutes* — réagis à ce message."}]},
@@ -422,7 +422,7 @@ def build():
         ]},
         {"type": "actions", "elements": [
             {"type": "button", "text": {"type": "plain_text", "text": "Voir le deal", "emoji": True},
-             "url": "https://app.attio.com/morning/deals_daily/record/{{1.deal_id}}"}]},
+             "url": "{{2.body.data.web_url}}"}]},
     ]}, ensure_ascii=False, indent=1)
     flow.append({
         "id": 17,
