@@ -385,7 +385,9 @@ def build():
         "parameters": {"__IMTCONN__": CONN_SLACK},
         "mapper": {
             "parse": False, "mrkdwn": True, "link_names": True,
-            "channel": "{{15.id}}", "channelType": "im", "channelWType": "map",
+            # Make normalise ce module en « Enter manually » : pas de channelType,
+            # et l'ID utilisateur renvoyé par SearchUser suffit — Slack ouvre le DM.
+            "channel": "{{15.id}}", "channelWType": "manualy",
             "blocks": dm_blocks,
             "text": "Nouveau lead à traiter en moins de 5 minutes",
         },
