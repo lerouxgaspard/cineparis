@@ -67,9 +67,26 @@ Attio POST /records/query   [stage = Contact Entrant
                              ET PAS (escalade_envoyee = true)
                              ET created_at < now - 15 min
                              ET created_at > now - 4 h]
- → Iterator → Slack SearchUser (Jules) → Slack DM d'alerte
- → Attio PATCH escalade_envoyee = true
+ → Airtable Equipe_Daily → Array aggregator     (traduire les UUID en noms)
+ → Iterator sur les leads → Array aggregator    (une ligne par lead)
+ → Slack SearchUser (Jules)  [filtre : length(digest) > 0]
+ → Slack DM — UN SEUL message listant tous les leads
+ → Iterator sur le digest → Attio PATCH escalade_envoyee = true
 ```
+
+**Pourquoi un digest et non un DM par lead.** Mesuré le 08/09 sur quatre heures de
+données réelles : six leads étaient restés au stage Contact Entrant. La règle des
+5 minutes n'est presque jamais tenue, donc un DM par lead aurait donné une vingtaine
+de notifications par jour à une seule personne — coupées en vingt-quatre heures, et
+l'escalade n'aurait plus rien escaladé. Un message par passage reste lisible.
+
+**Le marquage vient après la notification.** Si Slack tombe, les leads ne sont pas
+marqués et seront repris au passage suivant. L'inverse aurait perdu l'alerte
+définitivement.
+
+**Le propriétaire est résolu en nom.** L'API Attio ne renvoie qu'un UUID de
+workspace-member ; la table `Equipe_Daily` sert de trombinoscope, en une seule
+requête par passage et non une par lead.
 
 Deux subtilités du filtre, l'une et l'autre vérifiées contre les données réelles :
 

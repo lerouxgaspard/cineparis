@@ -29,6 +29,47 @@
     },
     {
       "id": 2,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 2426866
+      },
+      "mapper": {
+        "base": "app1ZLIN13lGG0cPE",
+        "table": "tbl362A2eveuwpuBE",
+        "formula": "",
+        "maxRecords": 50,
+        "useColumnId": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0,
+          "name": "Airtable - Équipe"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "module": "builtin:BasicAggregator",
+      "version": 1,
+      "parameters": {
+        "feeder": 2
+      },
+      "mapper": {
+        "name": "{{2.name}}",
+        "attio_user_id": "{{2.attio_user_id}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0,
+          "name": "Équipe agrégée"
+        }
+      }
+    },
+    {
+      "id": 4,
       "module": "builtin:BasicFeeder",
       "version": 1,
       "parameters": {},
@@ -37,14 +78,33 @@
       },
       "metadata": {
         "designer": {
-          "x": 300,
+          "x": 900,
           "y": 0,
-          "name": "Itérer"
+          "name": "Itérer les leads"
         }
       }
     },
     {
-      "id": 3,
+      "id": 6,
+      "module": "builtin:BasicAggregator",
+      "version": 1,
+      "parameters": {
+        "feeder": 4
+      },
+      "mapper": {
+        "ligne": "• *{{4.values.name[].value}}* — {{ifempty(get(first(4.values.value); \"currency_value\"); 0)}} EUR — {{ifempty(first(map(3.array; \"name\"; \"attio_user_id\"; first(map(4.values.owner; \"referenced_actor_id\")))); \"non attribué\")}} — créé à {{formatDate(4.values.created_at[].value; \"HH:mm\"; \"Europe/Paris\")}} — <https://app.attio.com/morning/deals_daily/record/{{4.id.record_id}}|ouvrir>",
+        "record_id": "{{4.id.record_id}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 1200,
+          "y": 0,
+          "name": "Digest"
+        }
+      }
+    },
+    {
+      "id": 7,
       "module": "slack:SearchUser",
       "version": 4,
       "parameters": {
@@ -53,16 +113,28 @@
       "mapper": {
         "email": "jules.b@morning.fr"
       },
+      "filter": {
+        "name": "Au moins un lead en souffrance",
+        "conditions": [
+          [
+            {
+              "a": "{{length(6.array)}}",
+              "o": "number:greater",
+              "b": "0"
+            }
+          ]
+        ]
+      },
       "metadata": {
         "designer": {
-          "x": 600,
+          "x": 1500,
           "y": 0,
           "name": "Slack - Jules"
         }
       }
     },
     {
-      "id": 4,
+      "id": 8,
       "module": "slack:CreateMessage",
       "version": 4,
       "parameters": {
@@ -72,29 +144,44 @@
         "parse": false,
         "mrkdwn": true,
         "link_names": true,
-        "channel": "{{3.id}}",
-        "channelType": "im",
-        "channelWType": "map",
-        "blocks": "{\n \"blocks\": [\n  {\n   \"type\": \"header\",\n   \"text\": {\n    \"type\": \"plain_text\",\n    \"text\": \":warning: Lead non traité depuis 15 minutes\",\n    \"emoji\": true\n   }\n  },\n  {\n   \"type\": \"section\",\n   \"fields\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Deal :*\\n{{2.values.name[].value}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Commercial :*\\n{{2.values.owner[].referenced_actor_id}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Stage :*\\n{{2.values.stage[].status.title}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Créé le :*\\n{{2.values.created_at[].value}}\"\n    }\n   ]\n  },\n  {\n   \"type\": \"context\",\n   \"elements\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"La règle des 5 minutes n'a pas été respectée — le deal est toujours au stage d'entrée.\"\n    }\n   ]\n  },\n  {\n   \"type\": \"actions\",\n   \"elements\": [\n    {\n     \"type\": \"button\",\n     \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \"Ouvrir le deal\",\n      \"emoji\": true\n     },\n     \"url\": \"https://app.attio.com/morning/deals_daily/record/{{2.id.record_id}}\",\n     \"style\": \"danger\"\n    }\n   ]\n  }\n ]\n}",
-        "text": "Lead non traité depuis 15 minutes"
+        "channel": "{{7.id}}",
+        "channelWType": "manualy",
+        "blocks": "{\n \"blocks\": [\n  {\n   \"type\": \"header\",\n   \"text\": {\n    \"type\": \"plain_text\",\n    \"text\": \":warning: Leads non traités depuis 15 min\",\n    \"emoji\": true\n   }\n  },\n  {\n   \"type\": \"section\",\n   \"text\": {\n    \"type\": \"mrkdwn\",\n    \"text\": \"{{join(map(6.array; \\\"ligne\\\"); \\\"\\\\n\\\")}}\"\n   }\n  },\n  {\n   \"type\": \"context\",\n   \"elements\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"Toujours au stage *Contact Entrant* — la règle des 5 minutes n'a pas été tenue.\"\n    }\n   ]\n  }\n ]\n}",
+        "text": "Leads non traités depuis 15 minutes"
       },
       "metadata": {
         "designer": {
-          "x": 900,
+          "x": 1800,
           "y": 0,
-          "name": "Slack - Alerter Jules"
+          "name": "Slack - Digest"
         }
       }
     },
     {
-      "id": 5,
+      "id": 9,
+      "module": "builtin:BasicFeeder",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "array": "{{6.array}}"
+      },
+      "metadata": {
+        "designer": {
+          "x": 2100,
+          "y": 0,
+          "name": "Itérer pour marquer"
+        }
+      }
+    },
+    {
+      "id": 10,
       "module": "attio:makeAnApiCall",
       "version": 2,
       "parameters": {
         "__IMTCONN__": 3292919
       },
       "mapper": {
-        "url": "/v2/objects/deals_daily/records/{{2.id.record_id}}",
+        "url": "/v2/objects/deals_daily/records/{{9.record_id}}",
         "method": "PATCH",
         "headers": [
           {
@@ -106,7 +193,7 @@
       },
       "metadata": {
         "designer": {
-          "x": 1200,
+          "x": 2400,
           "y": 0,
           "name": "Attio - Marquer escaladé"
         }
@@ -117,16 +204,16 @@
     "instant": false,
     "version": 1,
     "scenario": {
-      "roundtrips": 1,
+      "dlq": false,
+      "slots": null,
+      "dataloss": false,
       "maxErrors": 3,
       "autoCommit": true,
-      "autoCommitTriggerLast": true,
+      "roundtrips": 1,
       "sequential": false,
-      "slots": null,
       "confidential": false,
-      "dataloss": false,
-      "dlq": false,
-      "freshVariables": false
+      "freshVariables": false,
+      "autoCommitTriggerLast": true
     },
     "designer": {
       "orphans": []

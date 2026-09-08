@@ -1,42 +1,47 @@
 #!/usr/bin/env python3
 """Génère le blueprint Make « [PRD] [Attio] Escalade 5 min - À la journée ».
 
-Scénario planifié (toutes les 5 min) : le module Sleep de Make est plafonné à
-300 s, un délai de 15 minutes en ligne est donc impossible — et bloquer un run
-webhook 15 minutes empilerait les exécutions. L'escalade est un scénario séparé.
+Scénario planifié : le module Sleep de Make est plafonné à 300 s, un délai de
+15 minutes en ligne est donc impossible — et bloquer un run webhook 15 minutes
+empilerait les exécutions. L'escalade est un scénario séparé.
 
-PRÉREQUIS : la checkbox `escalade_envoyee` doit exister sur l'objet deals_daily.
+Forme retenue : un DIGEST. Mesuré le 08/09 sur 4 h de données réelles, six leads
+étaient restés au stage Contact Entrant — la règle des 5 minutes n'est presque
+jamais tenue. Un DM par lead aurait donné ~20 notifications par jour à une seule
+personne, qui les aurait coupées en une journée. Un seul message par passage,
+listant les leads en souffrance, reste lisible.
+
+PRÉREQUIS : la checkbox `escalade_envoyee` sur l'objet deals_daily.
 Régénérer avec :  python3 make/generate_escalade_blueprint.py
 """
 import json
 import pathlib
 
 CONN_ATTIO = 3292919
+CONN_AIRTABLE = 2426866
 CONN_SLACK = 53760
 
 ATTIO_OBJECT = "deals_daily"
-JULES_SLACK_EMAIL = "jules.b@morning.fr"
-STAGE_CONTACT_ENTRANT = "Contact Entrant"
+DESTINATAIRE = "jules.b@morning.fr"
+STAGE_ENTREE = "Contact Entrant"
 DELAI_MINUTES = 15
-FENETRE_HEURES = 4      # ne jamais escalader un lead plus vieux que ça
+FENETRE_HEURES = 4        # ne jamais escalader un lead plus vieux que ça
 
-# Deals encore au stage d'entrée, jamais escaladés, créés il y a plus de 15 min.
+AT_BASE = "app1ZLIN13lGG0cPE"
+AT_TABLE = "tbl362A2eveuwpuBE"          # Equipe_Daily
+
 QUERY_BODY = json.dumps({
     "filter": {
         "$and": [
-            {"stage": {"$eq": STAGE_CONTACT_ENTRANT}},
-            # $not plutôt que $eq false : les deals créés avant l'existence de
-            # l'attribut n'ont aucune valeur (null), et null != false. Cette forme
-            # attrape null ET false, et n'exclut que les leads déjà escaladés.
+            {"stage": {"$eq": STAGE_ENTREE}},
+            # $not plutôt que $eq false : l'attribut a été créé après coup, il est
+            # absent (null) de tout l'historique, et null != false.
             {"$not": {"escalade_envoyee": {"$eq": True}}},
-            # Borne haute : le lead a dépassé le délai.
             {"created_at": {
                 "$lt": "{{formatDate(addMinutes(now; -%d); \"YYYY-MM-DDTHH:mm:ss[Z]\"; \"UTC\")}}"
                 % DELAI_MINUTES}},
-            # Borne basse INDISPENSABLE : escalade_envoyee est vide sur tout
-            # l'historique, donc sans elle le premier run alerterait Jules sur
-            # chaque vieux lead resté à Contact Entrant. On ne regarde que les
-            # leads des dernières heures — au-delà, ce n'est plus un SLA raté.
+            # Borne basse indispensable : sans elle le premier passage remonterait
+            # tout l'historique resté à Contact Entrant (50+ deals au 08/09).
             {"created_at": {
                 "$gt": "{{formatDate(addHours(now; -%d); \"YYYY-MM-DDTHH:mm:ss[Z]\"; \"UTC\")}}"
                 % FENETRE_HEURES}},
@@ -46,30 +51,32 @@ QUERY_BODY = json.dumps({
     "limit": 50,
 }, ensure_ascii=False)
 
-ALERTE_BLOCKS = json.dumps({"blocks": [
+# Une ligne de digest par lead. Le propriétaire est résolu en nom via Equipe_Daily :
+# l'API Attio ne renvoie qu'un UUID, illisible dans Slack.
+LIGNE = (
+    "• *{{4.values.name[].value}}* — "
+    "{{ifempty(get(first(4.values.value); \"currency_value\"); 0)}} EUR — "
+    "{{ifempty(first(map(3.array; \"name\"; \"attio_user_id\"; "
+    "first(map(4.values.owner; \"referenced_actor_id\")))); \"non attribué\")}} — "
+    "créé à {{formatDate(4.values.created_at[].value; \"HH:mm\"; \"Europe/Paris\")}} — "
+    "<https://app.attio.com/morning/deals_daily/record/{{4.id.record_id}}|ouvrir>"
+)
+
+DIGEST_BLOCKS = json.dumps({"blocks": [
     {"type": "header", "text": {"type": "plain_text",
-                                "text": ":warning: Lead non traité depuis 15 minutes",
+                                "text": ":warning: Leads non traités depuis 15 min",
                                 "emoji": True}},
-    {"type": "section", "fields": [
-        {"type": "mrkdwn", "text": "*Deal :*\n{{2.values.name[].value}}"},
-        {"type": "mrkdwn", "text": "*Commercial :*\n{{2.values.owner[].referenced_actor_id}}"},
-        {"type": "mrkdwn", "text": "*Stage :*\n{{2.values.stage[].status.title}}"},
-        {"type": "mrkdwn", "text": "*Créé le :*\n{{2.values.created_at[].value}}"},
-    ]},
+    {"type": "section", "text": {"type": "mrkdwn",
+                                 "text": "{{join(map(6.array; \"ligne\"); \"\\n\")}}"}},
     {"type": "context", "elements": [
         {"type": "mrkdwn",
-         "text": "La règle des 5 minutes n'a pas été respectée — le deal est toujours au stage d'entrée."}]},
-    {"type": "actions", "elements": [
-        {"type": "button",
-         "text": {"type": "plain_text", "text": "Ouvrir le deal", "emoji": True},
-         "url": "https://app.attio.com/morning/deals_daily/record/{{2.id.record_id}}",
-         "style": "danger"}]},
+         "text": "Toujours au stage *Contact Entrant* — la règle des 5 minutes n'a pas été tenue."}]},
 ]}, ensure_ascii=False, indent=1)
 
 
 def build():
     flow = [
-        # 1 — Attio : chercher les leads en souffrance
+        # 1 — Les leads en souffrance
         {
             "id": 1,
             "module": "attio:makeAnApiCall",
@@ -84,51 +91,94 @@ def build():
             "metadata": {"designer": {"x": 0, "y": 0,
                                       "name": "Attio - Leads non traités"}},
         },
-        # 2 — Un bundle par deal
+        # 2/3 — Le trombinoscope, pour traduire les UUID en noms
         {
             "id": 2,
+            "module": "airtable:ActionSearchRecords",
+            "version": 3,
+            "parameters": {"__IMTCONN__": CONN_AIRTABLE},
+            "mapper": {
+                "base": AT_BASE,
+                "table": AT_TABLE,
+                "formula": "",
+                "maxRecords": 50,
+                "useColumnId": False,
+            },
+            "metadata": {"designer": {"x": 300, "y": 0, "name": "Airtable - Équipe"}},
+        },
+        {
+            "id": 3,
+            "module": "builtin:BasicAggregator",
+            "version": 1,
+            "parameters": {"feeder": 2},
+            "mapper": {"name": "{{2.name}}", "attio_user_id": "{{2.attio_user_id}}"},
+            "metadata": {"designer": {"x": 600, "y": 0, "name": "Équipe agrégée"}},
+        },
+        # 4/6 — Une ligne par lead, puis tout regroupé
+        {
+            "id": 4,
             "module": "builtin:BasicFeeder",
             "version": 1,
             "parameters": {},
             "mapper": {"array": "{{1.body.data}}"},
-            "metadata": {"designer": {"x": 300, "y": 0, "name": "Itérer"}},
+            "metadata": {"designer": {"x": 900, "y": 0, "name": "Itérer les leads"}},
         },
-        # 3 — Slack : retrouver Jules
         {
-            "id": 3,
+            "id": 6,
+            "module": "builtin:BasicAggregator",
+            "version": 1,
+            "parameters": {"feeder": 4},
+            "mapper": {"ligne": LIGNE, "record_id": "{{4.id.record_id}}"},
+            "metadata": {"designer": {"x": 1200, "y": 0, "name": "Digest"}},
+        },
+        # 7/8 — Un seul message, et seulement s'il y a quelque chose à dire
+        {
+            "id": 7,
             "module": "slack:SearchUser",
             "version": 4,
             "parameters": {"__IMTCONN__": CONN_SLACK},
-            "mapper": {"email": JULES_SLACK_EMAIL},
-            "metadata": {"designer": {"x": 600, "y": 0, "name": "Slack - Jules"}},
+            "mapper": {"email": DESTINATAIRE},
+            "filter": {
+                "name": "Au moins un lead en souffrance",
+                "conditions": [[{"a": "{{length(6.array)}}",
+                                 "o": "number:greater", "b": "0"}]],
+            },
+            "metadata": {"designer": {"x": 1500, "y": 0, "name": "Slack - Jules"}},
         },
-        # 4 — Slack : alerte
         {
-            "id": 4,
+            "id": 8,
             "module": "slack:CreateMessage",
             "version": 4,
             "parameters": {"__IMTCONN__": CONN_SLACK},
             "mapper": {
                 "parse": False, "mrkdwn": True, "link_names": True,
-                "channel": "{{3.id}}", "channelType": "im", "channelWType": "map",
-                "blocks": ALERTE_BLOCKS,
-                "text": "Lead non traité depuis 15 minutes",
+                "channel": "{{7.id}}", "channelWType": "manualy",
+                "blocks": DIGEST_BLOCKS,
+                "text": "Leads non traités depuis 15 minutes",
             },
-            "metadata": {"designer": {"x": 900, "y": 0, "name": "Slack - Alerter Jules"}},
+            "metadata": {"designer": {"x": 1800, "y": 0, "name": "Slack - Digest"}},
         },
-        # 5 — Attio : marquer, pour ne pas ré-alerter toutes les 5 minutes
+        # 9/10 — Marquer, après notification : si Slack tombe, on réessaiera
         {
-            "id": 5,
+            "id": 9,
+            "module": "builtin:BasicFeeder",
+            "version": 1,
+            "parameters": {},
+            "mapper": {"array": "{{6.array}}"},
+            "metadata": {"designer": {"x": 2100, "y": 0, "name": "Itérer pour marquer"}},
+        },
+        {
+            "id": 10,
             "module": "attio:makeAnApiCall",
             "version": 2,
             "parameters": {"__IMTCONN__": CONN_ATTIO},
             "mapper": {
-                "url": f"/v2/objects/{ATTIO_OBJECT}/records/{{{{2.id.record_id}}}}",
+                "url": f"/v2/objects/{ATTIO_OBJECT}/records/{{{{9.record_id}}}}",
                 "method": "PATCH",
                 "headers": [{"key": "Content-Type", "value": "application/json"}],
                 "body": '{"data":{"values":{"escalade_envoyee":[{"value":true}]}}}',
             },
-            "metadata": {"designer": {"x": 1200, "y": 0,
+            "metadata": {"designer": {"x": 2400, "y": 0,
                                       "name": "Attio - Marquer escaladé"}},
         },
     ]
@@ -140,10 +190,10 @@ def build():
             "instant": False,
             "version": 1,
             "scenario": {
-                "roundtrips": 1, "maxErrors": 3, "autoCommit": True,
-                "autoCommitTriggerLast": True, "sequential": False, "slots": None,
-                "confidential": False, "dataloss": False, "dlq": False,
-                "freshVariables": False,
+                "dlq": False, "slots": None, "dataloss": False, "maxErrors": 3,
+                "autoCommit": True, "roundtrips": 1, "sequential": False,
+                "confidential": False, "freshVariables": False,
+                "autoCommitTriggerLast": True,
             },
             "designer": {"orphans": []},
             "zone": "eu1.make.com",
@@ -156,9 +206,9 @@ SCHEDULING = {"type": "indefinitely", "interval": 300}  # toutes les 5 minutes
 
 if __name__ == "__main__":
     bp = build()
-    out = pathlib.Path(__file__).parent / "escalade-5min.blueprint.json"
-    out.write_text(json.dumps(bp, ensure_ascii=False, indent=2) + "\n",
-                   encoding="utf-8")
-    sch = pathlib.Path(__file__).parent / "escalade-5min.scheduling.json"
-    sch.write_text(json.dumps(SCHEDULING, indent=2) + "\n", encoding="utf-8")
-    print(f"OK -> {out}  ({len(bp['flow'])} modules)")
+    p = pathlib.Path(__file__).parent
+    (p / "escalade-5min.blueprint.json").write_text(
+        json.dumps(bp, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (p / "escalade-5min.scheduling.json").write_text(
+        json.dumps(SCHEDULING, indent=2) + "\n", encoding="utf-8")
+    print(f"OK — {len(bp['flow'])} modules")
