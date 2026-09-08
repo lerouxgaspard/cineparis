@@ -1,0 +1,2949 @@
+{
+  "flow": [
+    {
+      "id": 1,
+      "mapper": {},
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "metadata": {
+        "restore": {
+          "parameters": {
+            "hook": {
+              "data": {
+                "editable": "true"
+              },
+              "label": "[DEV][JOURNEE_V3.1] New Deal Daily - Gaspard"
+            }
+          }
+        },
+        "designer": {
+          "x": 0,
+          "y": 0
+        },
+        "parameters": [
+          {
+            "name": "hook",
+            "type": "hook:gateway-webhook",
+            "label": "Webhook",
+            "required": true
+          },
+          {
+            "name": "maxResults",
+            "type": "number",
+            "label": "Maximum number of results"
+          }
+        ]
+      },
+      "parameters": {
+        "hook": 3456539,
+        "maxResults": 1
+      }
+    },
+    {
+      "id": 2,
+      "mapper": {
+        "url": "/v2/objects/deals_daily/records/{{1.deal_id}}",
+        "method": "GET",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      },
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "metadata": {
+        "expect": [
+          {
+            "name": "url",
+            "type": "text",
+            "label": "URL",
+            "required": true
+          },
+          {
+            "name": "method",
+            "type": "select",
+            "label": "Method",
+            "required": true,
+            "validate": {
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE"
+              ]
+            }
+          },
+          {
+            "name": "headers",
+            "spec": [
+              {
+                "name": "key",
+                "type": "text",
+                "label": "Key"
+              },
+              {
+                "name": "value",
+                "type": "text",
+                "label": "Value"
+              }
+            ],
+            "type": "array",
+            "label": "Headers"
+          },
+          {
+            "name": "qs",
+            "spec": [
+              {
+                "name": "key",
+                "type": "text",
+                "label": "Key"
+              },
+              {
+                "name": "value",
+                "type": "text",
+                "label": "Value"
+              }
+            ],
+            "type": "array",
+            "label": "Query String"
+          },
+          {
+            "name": "body",
+            "type": "any",
+            "label": "Body"
+          }
+        ],
+        "restore": {
+          "expect": {
+            "qs": {
+              "mode": "chose"
+            },
+            "method": {
+              "mode": "chose",
+              "label": "GET"
+            },
+            "headers": {
+              "mode": "chose",
+              "items": [
+                null
+              ]
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "attio2"
+              },
+              "label": "Morning - New Prod (benoit@novlini.io (Morning))"
+            }
+          }
+        },
+        "designer": {
+          "x": 300,
+          "y": 0
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:attio2,attio",
+            "label": "Connection",
+            "required": true
+          }
+        ]
+      },
+      "parameters": {
+        "__IMTCONN__": 3292919
+      }
+    },
+    {
+      "id": 3,
+      "mapper": {
+        "qs": [],
+        "url": "/v2/objects/deals_daily/records/query",
+        "body": "{\"filter\":{\"path\":[[\"deals_daily\",\"associated_company_3\"],[\"companies\",\"record_id\"]],\"constraints\":{\"value\":\"{{ifempty(first(map(2.body.data.values.associated_company_3; \"target_record_id\")); \"00000000-0000-0000-0000-000000000000\")}}\"}},\"sorts\":[{\"attribute\":\"created_at\",\"direction\":\"desc\"}],\"limit\":10}",
+        "method": "POST",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      },
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "metadata": {
+        "restore": {
+          "expect": {
+            "qs": {
+              "mode": "chose"
+            },
+            "method": {
+              "mode": "chose",
+              "label": "POST"
+            },
+            "headers": {
+              "mode": "chose",
+              "items": [
+                null
+              ]
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "attio2"
+              },
+              "label": "Morning - New Prod (benoit@novlini.io (Morning))"
+            }
+          }
+        },
+        "designer": {
+          "x": 600,
+          "y": 0
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:attio2,attio",
+            "label": "Connection",
+            "required": true
+          }
+        ]
+      },
+      "parameters": {
+        "__IMTCONN__": 3292919
+      }
+    },
+    {
+      "id": 4,
+      "mapper": {
+        "base": "app1ZLIN13lGG0cPE",
+        "sort": [
+          {
+            "field": "dernier_lead_daily",
+            "direction": "asc"
+          }
+        ],
+        "table": "tbl362A2eveuwpuBE",
+        "formula": "AND({actif}=1, OR({est_absent}=0, {est_absent}=BLANK()))",
+        "maxRecords": "10",
+        "useColumnId": false
+      },
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "metadata": {
+        "expect": [
+          {
+            "name": "base",
+            "type": "select",
+            "label": "Base",
+            "required": true
+          },
+          {
+            "name": "useColumnId",
+            "type": "boolean",
+            "label": "Use Column ID",
+            "required": true
+          },
+          {
+            "name": "table",
+            "type": "select",
+            "label": "Table",
+            "required": true
+          },
+          {
+            "name": "formula",
+            "type": "text",
+            "label": "Formula"
+          },
+          {
+            "name": "maxRecords",
+            "type": "integer",
+            "label": "Limit"
+          },
+          {
+            "name": "sort",
+            "spec": [
+              {
+                "name": "field",
+                "type": "select",
+                "label": "Field",
+                "dynamic": true,
+                "options": []
+              },
+              {
+                "name": "direction",
+                "type": "select",
+                "label": "Direction",
+                "options": [
+                  {
+                    "label": "Descending",
+                    "value": "desc"
+                  },
+                  {
+                    "label": "Ascending",
+                    "value": "asc"
+                  }
+                ]
+              }
+            ],
+            "type": "array",
+            "label": "Sort"
+          },
+          {
+            "name": "view",
+            "type": "select",
+            "label": "View"
+          },
+          {
+            "name": "fields",
+            "type": "select",
+            "label": "Output Fields",
+            "multiple": true
+          }
+        ],
+        "restore": {
+          "expect": {
+            "base": {
+              "mode": "chose",
+              "label": "SDR"
+            },
+            "sort": {
+              "mode": "chose",
+              "items": [
+                {
+                  "field": {
+                    "mode": "chose",
+                    "label": "dernier_lead_daily"
+                  },
+                  "direction": {
+                    "mode": "chose",
+                    "label": "Ascending"
+                  }
+                }
+              ]
+            },
+            "view": {
+              "mode": "chose",
+              "label": "Empty"
+            },
+            "table": {
+              "mode": "chose",
+              "label": "Equipe_Daily"
+            },
+            "fields": {
+              "mode": "chose"
+            },
+            "useColumnId": {
+              "mode": "chose"
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "airtable2"
+              },
+              "label": "Make"
+            }
+          }
+        },
+        "designer": {
+          "x": 900,
+          "y": 0
+        },
+        "interface": [
+          {
+            "name": "__IMTLENGTH__",
+            "type": "uinteger",
+            "label": "Total number of bundles"
+          },
+          {
+            "name": "__IMTINDEX__",
+            "type": "uinteger",
+            "label": "Bundle order position"
+          },
+          {
+            "name": "id",
+            "type": "text",
+            "label": "ID"
+          },
+          {
+            "name": "createdTime",
+            "type": "date",
+            "label": "Created Time"
+          },
+          {
+            "name": "name",
+            "type": "text",
+            "label": "name"
+          },
+          {
+            "name": "mail",
+            "type": "text",
+            "label": "mail"
+          },
+          {
+            "name": "attio_user_id",
+            "type": "text",
+            "label": "attio_user_id"
+          },
+          {
+            "name": "actif",
+            "type": "boolean",
+            "label": "actif"
+          },
+          {
+            "name": "absence_debut",
+            "time": false,
+            "type": "date",
+            "label": "absence_debut"
+          },
+          {
+            "name": "absence_fin",
+            "time": false,
+            "type": "date",
+            "label": "absence_fin"
+          },
+          {
+            "name": "est_absent",
+            "type": "text",
+            "label": "est_absent"
+          },
+          {
+            "name": "dernier_lead_daily",
+            "time": true,
+            "type": "date",
+            "label": "dernier_lead_daily"
+          },
+          {
+            "name": "dans_rotation",
+            "type": "boolean",
+            "label": "dans_rotation"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:airtable3,airtable2",
+            "label": "Connection",
+            "required": true
+          }
+        ]
+      },
+      "parameters": {
+        "__IMTCONN__": 2426866
+      }
+    },
+    {
+      "id": 5,
+      "mapper": {
+        "id": "{{4.id}}",
+        "mail": "{{4.mail}}",
+        "name": "{{4.name}}",
+        "est_absent": "{{4.est_absent}}",
+        "attio_user_id": "{{4.attio_user_id}}"
+      },
+      "module": "builtin:BasicAggregator",
+      "version": 1,
+      "metadata": {
+        "restore": {
+          "extra": {
+            "feeder": {
+              "label": "Airtable - Search Records [4]"
+            },
+            "target": {
+              "label": "Custom"
+            }
+          }
+        },
+        "designer": {
+          "x": 1200,
+          "y": 0
+        }
+      },
+      "parameters": {
+        "feeder": 4
+      }
+    },
+    {
+      "id": 6,
+      "mapper": {
+        "scope": "roundtrip",
+        "variables": [
+          {
+            "name": "deal_value",
+            "value": "{{if(ifempty(1.existing_value; 0) > 0; 1.existing_value; if(1.type_ressource = \"SDR\"; round(ifempty(1.pax; 1) * ifempty(1.duration; 1) * 72; 0); if(1.type_ressource = \"Bureau à la journée\"; round(if(ifempty(1.pax; 1) < 4; 4; ifempty(1.pax; 1)) * ifempty(1.duration; 1) * 55; 0); round(ifempty(1.pax; 1) * 40; 0))))}}"
+          },
+          {
+            "name": "prev_owner_id",
+            "value": "{{get(first(flatten(map(3.body.data; \"values.owner\"))); \"referenced_actor_id\")}}"
+          },
+          {
+            "name": "rr_id",
+            "value": "{{first(map(5.array; \"attio_user_id\"))}}"
+          }
+        ]
+      },
+      "module": "util:SetVariables",
+      "version": 1,
+      "metadata": {
+        "expect": [
+          {
+            "name": "variables",
+            "spec": {
+              "name": "value",
+              "spec": [
+                {
+                  "name": "name",
+                  "type": "text",
+                  "label": "Variable name",
+                  "required": true
+                },
+                {
+                  "name": "value",
+                  "type": "any",
+                  "label": "Variable value"
+                }
+              ],
+              "type": "collection",
+              "label": "Variable"
+            },
+            "type": "array",
+            "label": "Variables",
+            "validate": {
+              "unique": {
+                "by": "name"
+              }
+            }
+          },
+          {
+            "name": "scope",
+            "type": "select",
+            "label": "Variable lifetime",
+            "required": true,
+            "validate": {
+              "enum": [
+                "roundtrip",
+                "execution"
+              ]
+            }
+          }
+        ],
+        "restore": {
+          "expect": {
+            "scope": {
+              "label": "One cycle"
+            },
+            "variables": {
+              "items": [
+                null,
+                null,
+                null
+              ]
+            }
+          }
+        },
+        "designer": {
+          "x": 1500,
+          "y": 0
+        },
+        "interface": [
+          {
+            "name": "deal_value",
+            "type": "any",
+            "label": "deal_value"
+          },
+          {
+            "name": "prev_owner_id",
+            "type": "any",
+            "label": "prev_owner_id"
+          },
+          {
+            "name": "rr_id",
+            "type": "any",
+            "label": "rr_id"
+          }
+        ]
+      },
+      "parameters": {}
+    },
+    {
+      "id": 13,
+      "mapper": {
+        "scope": "roundtrip",
+        "variables": [
+          {
+            "name": "prev_pool_absent",
+            "value": "{{if(length(6.prev_owner_id) > 0; ifempty(first(map(5.array; \"est_absent\"; \"attio_user_id\"; 6.prev_owner_id)); \"none\"); \"none\")}}"
+          },
+          {
+            "name": "valeur_score",
+            "value": "{{if(6.deal_value < 100; 0; if(6.deal_value < 500; 15; if(6.deal_value < 1500; 25; if(6.deal_value < 3000; 40; 50))))}}"
+          },
+          {
+            "name": "recurrence_score",
+            "value": "{{if(1.recurrence_frequency = \"Hebdomadaire\"; 20; if(1.recurrence_frequency = \"Mensuel\"; 15; if(1.recurrence_frequency = \"Annuel\"; 10; 0)))}}"
+          },
+          {
+            "name": "urgence_score",
+            "value": "{{if(ifempty(1.date_start; \"vide\") = \"vide\"; 5; if((parseDate(1.date_start) - now) / 1000 / 3600 < 24; 30; if((parseDate(1.date_start) - now) / 1000 / 3600 < 48; 25; if((parseDate(1.date_start) - now) / 1000 / 3600 < 72; 15; 5))))}}"
+          }
+        ]
+      },
+      "module": "util:SetVariables",
+      "version": 1,
+      "metadata": {
+        "expect": [
+          {
+            "name": "variables",
+            "spec": {
+              "name": "value",
+              "spec": [
+                {
+                  "name": "name",
+                  "type": "text",
+                  "label": "Variable name",
+                  "required": true
+                },
+                {
+                  "name": "value",
+                  "type": "any",
+                  "label": "Variable value"
+                }
+              ],
+              "type": "collection",
+              "label": "Variable"
+            },
+            "type": "array",
+            "label": "Variables",
+            "validate": {
+              "unique": {
+                "by": "name"
+              }
+            }
+          },
+          {
+            "name": "scope",
+            "type": "select",
+            "label": "Variable lifetime",
+            "required": true,
+            "validate": {
+              "enum": [
+                "roundtrip",
+                "execution"
+              ]
+            }
+          }
+        ],
+        "restore": {
+          "expect": {
+            "scope": {
+              "label": "One cycle"
+            },
+            "variables": {
+              "items": [
+                null,
+                null,
+                null,
+                null
+              ]
+            }
+          }
+        },
+        "designer": {
+          "x": 1800,
+          "y": 0
+        },
+        "interface": [
+          {
+            "name": "prev_pool_absent",
+            "type": "any",
+            "label": "prev_pool_absent"
+          },
+          {
+            "name": "valeur_score",
+            "type": "any",
+            "label": "valeur_score"
+          },
+          {
+            "name": "recurrence_score",
+            "type": "any",
+            "label": "recurrence_score"
+          },
+          {
+            "name": "urgence_score",
+            "type": "any",
+            "label": "urgence_score"
+          }
+        ]
+      },
+      "parameters": {}
+    },
+    {
+      "id": 14,
+      "mapper": {
+        "scope": "roundtrip",
+        "variables": [
+          {
+            "name": "assignee_id",
+            "value": "{{6.rr_id}}"
+          },
+          {
+            "name": "attribution_mode",
+            "value": "Round-robin"
+          },
+          {
+            "name": "total_score",
+            "value": "{{13.valeur_score + 13.urgence_score + 13.recurrence_score}}"
+          }
+        ]
+      },
+      "module": "util:SetVariables",
+      "version": 1,
+      "metadata": {
+        "expect": [
+          {
+            "name": "variables",
+            "spec": {
+              "name": "value",
+              "spec": [
+                {
+                  "name": "name",
+                  "type": "text",
+                  "label": "Variable name",
+                  "required": true
+                },
+                {
+                  "name": "value",
+                  "type": "any",
+                  "label": "Variable value"
+                }
+              ],
+              "type": "collection",
+              "label": "Variable"
+            },
+            "type": "array",
+            "label": "Variables",
+            "validate": {
+              "unique": {
+                "by": "name"
+              }
+            }
+          },
+          {
+            "name": "scope",
+            "type": "select",
+            "label": "Variable lifetime",
+            "required": true,
+            "validate": {
+              "enum": [
+                "roundtrip",
+                "execution"
+              ]
+            }
+          }
+        ],
+        "restore": {
+          "expect": {
+            "scope": {
+              "label": "One cycle"
+            },
+            "variables": {
+              "items": [
+                null,
+                null,
+                null
+              ]
+            }
+          }
+        },
+        "designer": {
+          "x": 2100,
+          "y": 0
+        },
+        "interface": [
+          {
+            "name": "assignee_id",
+            "type": "any",
+            "label": "assignee_id"
+          },
+          {
+            "name": "attribution_mode",
+            "type": "any",
+            "label": "attribution_mode"
+          },
+          {
+            "name": "total_score",
+            "type": "any",
+            "label": "total_score"
+          }
+        ]
+      },
+      "parameters": {}
+    },
+    {
+      "id": 15,
+      "mapper": {
+        "scope": "roundtrip",
+        "variables": [
+          {
+            "name": "assignee_email",
+            "value": "{{ifempty(first(map(5.array; \"mail\"; \"attio_user_id\"; 14.assignee_id)); \"jules.b@morning.fr\")}}"
+          },
+          {
+            "name": "assignee_name",
+            "value": "{{ifempty(first(map(5.array; \"name\"; \"attio_user_id\"; 14.assignee_id)); \"Jules Bornhauser\")}}"
+          },
+          {
+            "name": "assignee_airtable_rec",
+            "value": "{{first(map(5.array; \"id\"; \"attio_user_id\"; 14.assignee_id))}}"
+          }
+        ]
+      },
+      "module": "util:SetVariables",
+      "version": 1,
+      "metadata": {
+        "restore": {
+          "expect": {
+            "scope": {
+              "label": "One cycle"
+            },
+            "variables": {
+              "items": [
+                null,
+                null,
+                null
+              ]
+            }
+          }
+        },
+        "designer": {
+          "x": 2400,
+          "y": 0
+        },
+        "interface": [
+          {
+            "name": "assignee_email",
+            "type": "any",
+            "label": "assignee_email"
+          },
+          {
+            "name": "assignee_name",
+            "type": "any",
+            "label": "assignee_name"
+          },
+          {
+            "name": "assignee_airtable_rec",
+            "type": "any",
+            "label": "assignee_airtable_rec"
+          }
+        ]
+      },
+      "parameters": {}
+    },
+    {
+      "id": 7,
+      "mapper": {
+        "url": "/v2/objects/deals_daily/records/{{1.deal_id}}",
+        "body": "{\"data\":{\"values\":{\"score_prioritaire\":{{14.total_score}},\"value\":[{\"currency_value\":{{6.deal_value}}}],\"owner\":[{\"referenced_actor_type\":\"workspace-member\",\"referenced_actor_id\":\"{{14.assignee_id}}\"}]}}}",
+        "method": "PATCH",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      },
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "metadata": {
+        "expect": [
+          {
+            "name": "url",
+            "type": "text",
+            "label": "URL",
+            "required": true
+          },
+          {
+            "name": "method",
+            "type": "select",
+            "label": "Method",
+            "required": true,
+            "validate": {
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE"
+              ]
+            }
+          },
+          {
+            "name": "headers",
+            "spec": [
+              {
+                "name": "key",
+                "type": "text",
+                "label": "Key"
+              },
+              {
+                "name": "value",
+                "type": "text",
+                "label": "Value"
+              }
+            ],
+            "type": "array",
+            "label": "Headers"
+          },
+          {
+            "name": "qs",
+            "spec": [
+              {
+                "name": "key",
+                "type": "text",
+                "label": "Key"
+              },
+              {
+                "name": "value",
+                "type": "text",
+                "label": "Value"
+              }
+            ],
+            "type": "array",
+            "label": "Query String"
+          },
+          {
+            "name": "body",
+            "type": "any",
+            "label": "Body"
+          }
+        ],
+        "restore": {
+          "expect": {
+            "qs": {
+              "mode": "chose"
+            },
+            "method": {
+              "mode": "chose",
+              "label": "PATCH"
+            },
+            "headers": {
+              "mode": "chose",
+              "items": [
+                null
+              ]
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "attio2"
+              },
+              "label": "Morning - New Prod (benoit@novlini.io (Morning))"
+            }
+          }
+        },
+        "designer": {
+          "x": 2700,
+          "y": 0
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:attio2,attio",
+            "label": "Connection",
+            "required": true
+          }
+        ]
+      },
+      "parameters": {
+        "__IMTCONN__": 3292919
+      }
+    },
+    {
+      "id": 8,
+      "mapper": {
+        "url": "/v2/tasks",
+        "body": "{\n  \"data\": {\n    \"content\": \"Prendre le brief à la journée\",\n    \"format\": \"plaintext\",\n    \"deadline_at\": \"{{now}}\",\n    \"is_completed\": false,\n    \"linked_records\": [\n      {\n        \"target_object\": \"deals_daily\",\n        \"target_record_id\": \"a78d3b55-a3e6-4811-9c42-d2a32ef62438\"\n      }\n    ],\n    \"assignees\": [\n      {\n        \"referenced_actor_type\": \"workspace-member\",\n        \"referenced_actor_id\": \"{{14.assignee_id}}\"\n      }\n    ]\n  }\n}",
+        "method": "POST",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      },
+      "module": "attio:makeAnApiCall",
+      "version": 2,
+      "metadata": {
+        "expect": [
+          {
+            "name": "url",
+            "type": "text",
+            "label": "URL",
+            "required": true
+          },
+          {
+            "name": "method",
+            "type": "select",
+            "label": "Method",
+            "required": true,
+            "validate": {
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE"
+              ]
+            }
+          },
+          {
+            "name": "headers",
+            "spec": [
+              {
+                "name": "key",
+                "type": "text",
+                "label": "Key"
+              },
+              {
+                "name": "value",
+                "type": "text",
+                "label": "Value"
+              }
+            ],
+            "type": "array",
+            "label": "Headers"
+          },
+          {
+            "name": "qs",
+            "spec": [
+              {
+                "name": "key",
+                "type": "text",
+                "label": "Key"
+              },
+              {
+                "name": "value",
+                "type": "text",
+                "label": "Value"
+              }
+            ],
+            "type": "array",
+            "label": "Query String"
+          },
+          {
+            "name": "body",
+            "type": "any",
+            "label": "Body"
+          }
+        ],
+        "restore": {
+          "expect": {
+            "qs": {
+              "mode": "chose"
+            },
+            "method": {
+              "mode": "chose",
+              "label": "POST"
+            },
+            "headers": {
+              "mode": "chose",
+              "items": [
+                null
+              ]
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "attio2"
+              },
+              "label": "Morning - New Prod (benoit@novlini.io (Morning))"
+            }
+          }
+        },
+        "designer": {
+          "x": 3000,
+          "y": 0,
+          "name": "Create Task"
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:attio2,attio",
+            "label": "Connection",
+            "required": true
+          }
+        ]
+      },
+      "parameters": {
+        "__IMTCONN__": 3292919
+      }
+    },
+    {
+      "id": 9,
+      "mapper": {
+        "id": "{{15.assignee_airtable_rec}}",
+        "base": "app1ZLIN13lGG0cPE",
+        "table": "tbl362A2eveuwpuBE",
+        "record": {
+          "fldmq0SDLFYe3gJoS": "{{now}}"
+        },
+        "typecast": false,
+        "useColumnId": true
+      },
+      "module": "airtable:ActionUpdateRecords",
+      "version": 3,
+      "metadata": {
+        "restore": {
+          "expect": {
+            "base": {
+              "mode": "chose",
+              "label": "SDR"
+            },
+            "table": {
+              "mode": "chose",
+              "label": "Equipe_Daily"
+            },
+            "useColumnId": {
+              "mode": "chose"
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "airtable3"
+              },
+              "label": "Make"
+            }
+          }
+        },
+        "designer": {
+          "x": 3300,
+          "y": 0
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:airtable3,airtable2",
+            "label": "Connection",
+            "required": true
+          }
+        ]
+      },
+      "parameters": {
+        "__IMTCONN__": 2426866
+      }
+    },
+    {
+      "id": 10,
+      "mapper": {
+        "email": "{{15.assignee_email}}"
+      },
+      "module": "slack:SearchUser",
+      "version": 4,
+      "metadata": {
+        "restore": {
+          "expect": {},
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "slack2"
+              },
+              "label": "Robot Bidule (bidule)"
+            }
+          }
+        },
+        "designer": {
+          "x": 3600,
+          "y": 0
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:slack2",
+            "label": "Connection",
+            "required": true
+          }
+        ]
+      },
+      "parameters": {
+        "__IMTCONN__": 53760
+      }
+    },
+    {
+      "id": 11,
+      "mapper": {
+        "parse": false,
+        "blocks": "{\n\t\"blocks\": [\n\t\t{\n\t\t\t\"type\": \"header\",\n\t\t\t\"text\": {\n\t\t\t\t\"type\": \"plain_text\",\n\t\t\t\t\"text\": \":new: Nouveau lead à la journée !\",\n\t\t\t\t\"emoji\": true\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"type\": \"section\",\n\t\t\t\"fields\": [\n\t\t\t\t{\"type\": \"mrkdwn\", \"text\": \"*Commercial :*\\n<@{{10.id}}>\"},\n\t\t\t\t{\"type\": \"mrkdwn\", \"text\": \"*Attribution :*\\n{{14.attribution_mode}}\"},\n\t\t\t\t{\"type\": \"mrkdwn\", \"text\": \"*Produit :*\\n{{1.type_ressource}}\"},\n\t\t\t\t{\"type\": \"mrkdwn\", \"text\": \"*Participants :*\\n{{ifempty(1.pax; emptystring)}} pax\"},\n\t\t\t\t{\"type\": \"mrkdwn\", \"text\": \"*Date event :*\\n{{ifempty(1.date_start; \\ + \"À préciser\")}}\"},\n\t\t\t\t{\"type\": \"mrkdwn\", \"text\": \"*Société :*\\n{{ifempty(1.company_name; \\ + \"Inconnue\")}}\"},\n\t\t\t\t{\"type\": \"mrkdwn\", \"text\": \"*Valeur estimée :*\\n{{6.deal_value}} €\"}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"type\": \"divider\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"actions\",\n\t\t\t\"elements\": [\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"button\",\n\t\t\t\t\t\"text\": {\"type\": \"plain_text\", \"text\": \"Voir dans Attio\", \"emoji\": true},\n\t\t\t\t\t\"url\": \"{{1.attio_record_url}}\",\n\t\t\t\t\t\"style\": \"primary\"\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t]\n}",
+        "mrkdwn": true,
+        "channel": "C084VQ7D6B0",
+        "link_names": true,
+        "channelType": "public",
+        "channelWType": "list"
+      },
+      "module": "slack:CreateMessage",
+      "version": 4,
+      "metadata": {
+        "expect": [
+          {
+            "name": "channelWType",
+            "type": "select",
+            "label": "Enter a channel ID or name",
+            "required": true,
+            "validate": {
+              "enum": [
+                "manualy",
+                "list"
+              ]
+            }
+          },
+          {
+            "name": "text",
+            "type": "text",
+            "label": "Text"
+          },
+          {
+            "name": "blocks",
+            "type": "text",
+            "label": "Blocks"
+          },
+          {
+            "name": "thread_ts",
+            "type": "text",
+            "label": "Thread message ID (time stamp)"
+          },
+          {
+            "name": "reply_broadcast",
+            "type": "boolean",
+            "label": "Reply broadcast"
+          },
+          {
+            "name": "link_names",
+            "type": "boolean",
+            "label": "Link names"
+          },
+          {
+            "name": "parse",
+            "type": "boolean",
+            "label": "Parse message text"
+          },
+          {
+            "name": "mrkdwn",
+            "type": "boolean",
+            "label": "Use markdown"
+          },
+          {
+            "name": "unfurl_links",
+            "type": "boolean",
+            "label": "Unfurl primarily text-based content"
+          },
+          {
+            "name": "unfurl_media",
+            "type": "boolean",
+            "label": "Unfurl media content"
+          },
+          {
+            "name": "icon_emoji",
+            "type": "text",
+            "label": "Icon emoji"
+          },
+          {
+            "name": "icon_url",
+            "type": "url",
+            "label": "Icon url"
+          },
+          {
+            "name": "username",
+            "type": "text",
+            "label": "User name"
+          },
+          {
+            "name": "channelType",
+            "type": "select",
+            "label": "Channel type",
+            "required": true,
+            "validate": {
+              "enum": [
+                "public",
+                "private",
+                "im",
+                "mpim"
+              ]
+            }
+          },
+          {
+            "name": "channel",
+            "type": "select",
+            "label": "Public channel",
+            "required": true
+          }
+        ],
+        "restore": {
+          "expect": {
+            "parse": {
+              "mode": "chose"
+            },
+            "mrkdwn": {
+              "mode": "chose"
+            },
+            "channel": {
+              "mode": "chose",
+              "label": "100sdr"
+            },
+            "link_names": {
+              "mode": "chose"
+            },
+            "channelType": {
+              "label": "Public channel"
+            },
+            "channelWType": {
+              "label": "Select from the list"
+            },
+            "unfurl_links": {
+              "mode": "chose"
+            },
+            "unfurl_media": {
+              "mode": "chose"
+            },
+            "reply_broadcast": {
+              "mode": "chose"
+            }
+          },
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "slack2"
+              },
+              "label": "Robot Bidule (lateambm.slack.com - bidule)"
+            }
+          }
+        },
+        "designer": {
+          "x": 3900,
+          "y": 0
+        },
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:slack2,slack3",
+            "label": "Connection",
+            "required": true
+          }
+        ]
+      },
+      "parameters": {
+        "__IMTCONN__": 53760
+      }
+    }
+  ],
+  "name": "[DEV] À la journée - Round Robin - Attribution + Valeur + Slack - Gaspard",
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "designer": {
+      "orphans": [
+        [
+          {
+            "id": 12,
+            "mapper": {
+              "body": "{\"ok\":true,\"deal_id\":\"{{1.deal_id}}\",\"assignee\":\"{{15.assignee_email}}\",\"mode\":\"{{14.attribution_mode}}\",\"value\":{{6.deal_value}}}",
+              "status": "200",
+              "headers": []
+            },
+            "module": "gateway:WebhookRespond",
+            "version": 1,
+            "metadata": {
+              "restore": {
+                "expect": {
+                  "headers": {
+                    "mode": "chose"
+                  }
+                }
+              },
+              "designer": {
+                "x": 4200,
+                "y": 0,
+                "messages": [
+                  {
+                    "message": "'Webhooks - Webhook response' [module ID 12] references inaccessible module 'Tools - Set multiple variables' [module ID 14].",
+                    "category": "reference",
+                    "severity": "error"
+                  },
+                  {
+                    "message": "'Webhooks - Webhook response' [module ID 12] references inaccessible module 'Tools - Set multiple variables' [module ID 15].",
+                    "category": "reference",
+                    "severity": "error"
+                  },
+                  {
+                    "message": "'Webhooks - Webhook response' [module ID 12] references inaccessible module 'Tools - Set multiple variables' [module ID 6].",
+                    "category": "reference",
+                    "severity": "error"
+                  },
+                  {
+                    "message": "'Webhooks - Webhook response' [module ID 12] references inaccessible module 'Webhooks - Custom webhook' [module ID 1].",
+                    "category": "reference",
+                    "severity": "error"
+                  },
+                  {
+                    "message": "To use Webhook response, your scenario must receive data through a webhook or Receive data module. Without it, the scenario can't run and will fail. Add a webhook trigger or receive module as the first module, or delete Webhook response.",
+                    "category": "webhookrespond",
+                    "severity": "error"
+                  },
+                  {
+                    "message": "Responder is not supported when scenario is configured for sequential processing.",
+                    "category": "badresponder",
+                    "severity": "warning"
+                  },
+                  {
+                    "message": "This module is not connected to the flow. This module and everything after it will be skipped during execution. <autoconnect>Link it to your scenario to include them.</autoconnect>",
+                    "category": "link",
+                    "severity": "warning"
+                  }
+                ]
+              }
+            },
+            "parameters": {}
+          }
+        ]
+      ],
+      "samples": {
+        "1": {
+          "pax": null,
+          "deal_id": "16129e19-c942-4b18-81f8-d9616f557c3e",
+          "duration": 1,
+          "date_start": "Oct 12, 2026",
+          "company_name": "Aerogen",
+          "existing_value": null,
+          "type_ressource": "SDR",
+          "attio_record_url": "https://app.attio.com/morning-prod/custom/deals_daily/record/16129e19-c942-4b18-81f8-d9616f557c3e",
+          "recurrence_frequency": ""
+        },
+        "2": {
+          "body": {
+            "data": {
+              "id": {
+                "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                "record_id": "16129e19-c942-4b18-81f8-d9616f557c3e",
+                "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+              },
+              "values": {
+                "pax": [],
+                "name": [
+                  {
+                    "value": "SDR// Aerogen - Oct 12, 2026 - Ponctuel",
+                    "active_from": "2026-09-02T08:01:28.188055355Z",
+                    "active_until": null,
+                    "attribute_type": "text",
+                    "created_by_actor": {
+                      "id": "4981d2f9-c3ec-4ee8-932a-80c52d68ff26",
+                      "type": "app"
+                    }
+                  }
+                ],
+                "gclid": [],
+                "owner": [
+                  {
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "actor-reference",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    },
+                    "referenced_actor_id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                    "referenced_actor_type": "workspace-member"
+                  }
+                ],
+                "stage": [
+                  {
+                    "status": {
+                      "id": {
+                        "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                        "status_id": "edd12aa0-7e9c-4478-ab45-042534c1bc4a",
+                        "attribute_id": "992d6bcf-e109-438d-9c3b-d0a8b403e8b8",
+                        "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                      },
+                      "title": "Contact Entrant",
+                      "is_archived": false,
+                      "celebration_enabled": false,
+                      "target_time_in_status": null
+                    },
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "status",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "value": [
+                  {
+                    "active_from": "2026-09-02T08:01:30.148318801Z",
+                    "active_until": null,
+                    "currency_code": "EUR",
+                    "attribute_type": "currency",
+                    "currency_value": 72,
+                    "created_by_actor": {
+                      "id": "4981d2f9-c3ec-4ee8-932a-80c52d68ff26",
+                      "type": "app"
+                    }
+                  }
+                ],
+                "budget": [],
+                "fbclid": [],
+                "campagne": [],
+                "closed_at": [],
+                "lost_date": [],
+                "record_id": [
+                  {
+                    "value": "16129e19-c942-4b18-81f8-d9616f557c3e",
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "text",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "created_at": [
+                  {
+                    "value": "2026-09-02T08:01:25.725515897Z",
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "timestamp",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "created_by": [
+                  {
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "actor-reference",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    },
+                    "referenced_actor_id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                    "referenced_actor_type": "workspace-member"
+                  }
+                ],
+                "touchpoint": [],
+                "utm_medium": [],
+                "utm_source": [],
+                "deal_source": [
+                  {
+                    "option": {
+                      "id": {
+                        "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                        "option_id": "978b482d-914d-4e95-9307-48a5f011d25c",
+                        "attribute_id": "127e20ae-7d95-41f6-9e15-2e5bfcfc135b",
+                        "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                      },
+                      "title": "Organic",
+                      "is_archived": false
+                    },
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "select",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "id_airtable": [
+                  {
+                    "value": "recY6kNapqC6NajRR",
+                    "active_from": "2026-09-02T08:01:32.825941691Z",
+                    "active_until": null,
+                    "attribute_type": "text",
+                    "created_by_actor": {
+                      "id": "4981d2f9-c3ec-4ee8-932a-80c52d68ff26",
+                      "type": "app"
+                    }
+                  }
+                ],
+                "lost_reason": [],
+                "nb_d_heures": [],
+                "sdr_formule": [],
+                "airtable_url": [],
+                "lien_fillout": [
+                  {
+                    "value": "https://forms.morning.fr/t/tXujPixguSus",
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "text",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "platform_ref": [],
+                "utm_campaign": [],
+                "espace_signed": [],
+                "food_beverage": [],
+                "besoin_d_ecran": [],
+                "requalified_to": [],
+                "airtable_id_upd": [],
+                "closed_won_date": [],
+                "not_in_airtable": [],
+                "parrain_morning": [],
+                "lost_description": [],
+                "pipeline_version": [],
+                "proposed_morning": [],
+                "sdr_formule_slot": [],
+                "type_de_paiement": [],
+                "type_offre_daily": [
+                  {
+                    "option": {
+                      "id": {
+                        "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                        "option_id": "862856f3-da5d-437b-abf6-88b134628f48",
+                        "attribute_id": "c10d309d-42c0-4c5b-9028-a9e7b0dda0da",
+                        "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                      },
+                      "title": "Ponctuel",
+                      "is_archived": false
+                    },
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "select",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "associated_people": [
+                  {
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "target_object": "people",
+                    "attribute_type": "record-reference",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    },
+                    "target_record_id": "5983ca48-3570-44cc-962d-bbf4957b4e93"
+                  }
+                ],
+                "numero_de_facture": [],
+                "score_prioritaire": [
+                  {
+                    "value": 30,
+                    "active_from": "2026-09-02T08:01:30.148318801Z",
+                    "active_until": null,
+                    "attribute_type": "number",
+                    "created_by_actor": {
+                      "id": "4981d2f9-c3ec-4ee8-932a-80c52d68ff26",
+                      "type": "app"
+                    }
+                  }
+                ],
+                "type_de_ressource": [
+                  {
+                    "option": {
+                      "id": {
+                        "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                        "option_id": "135207a6-ed16-4fe8-b97b-5ff53851cd00",
+                        "attribute_id": "83209e9f-6a76-4c4c-9e2e-04ed174cefd5",
+                        "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                      },
+                      "title": "SDR",
+                      "is_archived": false
+                    },
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "select",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "id_airtable_bureau": [],
+                "proposal_sent_date": [],
+                "district_preference": [],
+                "duration_deal_daily": [
+                  {
+                    "value": 3,
+                    "active_from": "2026-09-02T08:01:46.799227528Z",
+                    "active_until": null,
+                    "attribute_type": "number",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "engagement_end_date": [],
+                "meeting_room_signed": [],
+                "next_follow_up_date": [],
+                "recurrence_detected": [],
+                "associated_company_3": [
+                  {
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "target_object": "companies",
+                    "attribute_type": "record-reference",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    },
+                    "target_record_id": "270d430d-efc1-405f-8b5d-31dfc7212eed"
+                  }
+                ],
+                "recurrence_frequency": [],
+                "admin_automation_stop": [
+                  {
+                    "option": {
+                      "id": {
+                        "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                        "option_id": "f3a357bb-83c4-4970-ba48-c160c882d58d",
+                        "attribute_id": "55fec6f7-c29a-4ffd-aa3a-1ffeeb917138",
+                        "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                      },
+                      "title": "No",
+                      "is_archived": false
+                    },
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "select",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "date_start_deal_daily": [
+                  {
+                    "value": "2026-10-12",
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "date",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "lien_formulaire_reunion": [],
+                "requalification_comment": [],
+                "original_lead_created_at": []
+              },
+              "web_url": "https://app.attio.com/morning-prod/custom/deals_daily/record/16129e19-c942-4b18-81f8-d9616f557c3e",
+              "created_at": "2026-09-02T08:01:25.725515897Z"
+            }
+          },
+          "headers": {
+            "via": "1.1 google",
+            "date": "Wed, 02 Sep 2026 08:05:22 GMT",
+            "vary": "Origin",
+            "cf-ray": "a34b021a1a603ef9-DUB",
+            "server": "cloudflare",
+            "alt-svc": "h3=\":443\"; ma=86400",
+            "connection": "close",
+            "content-type": "application/json; charset=utf-8",
+            "x-accurate-at": "2026-09-02T08:05:15.568372000Z",
+            "cf-cache-status": "DYNAMIC",
+            "x-frame-options": "DENY",
+            "transfer-encoding": "chunked",
+            "x-attio-execution-id": "478b3a24-3381-4f4c-bee2-2dbb2b8e8186",
+            "strict-transport-security": "max-age=7776000; includeSubDomains; preload",
+            "access-control-allow-origin": "*",
+            "access-control-expose-headers": "x-attio-client,x-attio-execution-id,x-attio-platform,x-attio-platform-version,x-attio-record-query-s..."
+          },
+          "statusCode": 200
+        },
+        "3": {
+          "body": {
+            "data": [
+              {
+                "id": {
+                  "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                  "record_id": "3e00e351-075c-4bbb-897f-18bbe636bb77",
+                  "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                },
+                "values": {
+                  "pax": [
+                    {
+                      "value": 15,
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "number",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "name": [
+                    {
+                      "value": "SDR // AEROGEN - 08/07 - Ponctuel",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "text",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "gclid": [],
+                  "owner": [
+                    {
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "actor-reference",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      },
+                      "referenced_actor_id": "0b4edc72-a9bf-4a54-bb84-f336677586df",
+                      "referenced_actor_type": "workspace-member"
+                    }
+                  ],
+                  "stage": [
+                    {
+                      "status": {
+                        "id": {
+                          "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                          "status_id": "0378be91-7d57-414d-b612-199519d3ae9b",
+                          "attribute_id": "992d6bcf-e109-438d-9c3b-d0a8b403e8b8",
+                          "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                        },
+                        "title": "Won",
+                        "is_archived": null,
+                        "celebration_enabled": null,
+                        "target_time_in_status": null
+                      },
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "status",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "value": [
+                    {
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "currency_code": "EUR",
+                      "attribute_type": "currency",
+                      "currency_value": 1539,
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "budget": [],
+                  "fbclid": [],
+                  "campagne": [
+                    {
+                      "option": {
+                        "id": {
+                          "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                          "option_id": "5d63b29c-d134-4662-b2c8-c2aad331bcb8",
+                          "attribute_id": "a64a398a-49a0-44ae-8ddb-25e5afdcfc19",
+                          "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                        },
+                        "title": "Accueil Morning",
+                        "is_archived": false
+                      },
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "select",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "closed_at": [
+                    {
+                      "value": "2026-06-10T14:03:47.000000000Z",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "timestamp",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "lost_date": [],
+                  "record_id": [
+                    {
+                      "value": "3e00e351-075c-4bbb-897f-18bbe636bb77",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "text",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "created_at": [
+                    {
+                      "value": "2026-08-28T07:19:35.603552901Z",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "timestamp",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "created_by": [
+                    {
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "actor-reference",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      },
+                      "referenced_actor_id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                      "referenced_actor_type": "api-token"
+                    }
+                  ],
+                  "touchpoint": [
+                    {
+                      "option": {
+                        "id": {
+                          "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                          "option_id": "d092db08-f473-4f70-9a90-cc6ada14b921",
+                          "attribute_id": "014f5d8e-ef21-4407-8fa9-f729b04aad05",
+                          "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                        },
+                        "title": "fillout-form",
+                        "is_archived": false
+                      },
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "select",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "utm_medium": [],
+                  "utm_source": [],
+                  "deal_source": [
+                    {
+                      "option": {
+                        "id": {
+                          "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                          "option_id": "9e16298a-7630-46f2-a9e7-deeadef47c81",
+                          "attribute_id": "127e20ae-7d95-41f6-9e15-2e5bfcfc135b",
+                          "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                        },
+                        "title": "Contact direct",
+                        "is_archived": null
+                      },
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "select",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "id_airtable": [
+                    {
+                      "value": "recE71W68OGhwTozk",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "text",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "lost_reason": [],
+                  "nb_d_heures": [
+                    {
+                      "value": 18,
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "number",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "sdr_formule": [],
+                  "airtable_url": [
+                    {
+                      "value": "https://airtable.com/app1ZLIN13lGG0cPE/pagdpuK0ph2Js7lNR/recE71W68OGhwTozk",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "text",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "lien_fillout": [
+                    {
+                      "value": "https://forms.morning.fr/t/tXujPixguSus",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "text",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "platform_ref": [],
+                  "utm_campaign": [],
+                  "espace_signed": [
+                    {
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "target_object": "espaces",
+                      "attribute_type": "record-reference",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      },
+                      "target_record_id": "2a60b224-94d1-56e8-8870-ced608728155"
+                    }
+                  ],
+                  "food_beverage": [
+                    {
+                      "option": {
+                        "id": {
+                          "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                          "option_id": "e8e5de4d-a719-48fd-958b-f386c18fbdf9",
+                          "attribute_id": "bf8745cc-654b-4d4d-9d9e-340842d3c1f3",
+                          "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                        },
+                        "title": "Non",
+                        "is_archived": false
+                      },
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "select",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "besoin_d_ecran": [],
+                  "requalified_to": [],
+                  "airtable_id_upd": [
+                    {
+                      "value": true,
+                      "active_from": "2026-08-28T10:29:05.747929047Z",
+                      "active_until": null,
+                      "attribute_type": "checkbox",
+                      "created_by_actor": {
+                        "id": "4981d2f9-c3ec-4ee8-932a-80c52d68ff26",
+                        "type": "app"
+                      }
+                    }
+                  ],
+                  "closed_won_date": [],
+                  "not_in_airtable": [],
+                  "parrain_morning": [],
+                  "lost_description": [],
+                  "pipeline_version": [
+                    {
+                      "option": {
+                        "id": {
+                          "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                          "option_id": "b3184e17-6cf6-44de-9d44-9707f4b4d561",
+                          "attribute_id": "7365dbad-ce93-42a6-a242-b65fa1687295",
+                          "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                        },
+                        "title": "Data Migration SDR Airtable > Attio - 202608",
+                        "is_archived": false
+                      },
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "select",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "proposed_morning": [
+                    {
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "target_object": "espaces",
+                      "attribute_type": "record-reference",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      },
+                      "target_record_id": "2a60b224-94d1-56e8-8870-ced608728155"
+                    }
+                  ],
+                  "sdr_formule_slot": [],
+                  "type_de_paiement": [],
+                  "type_offre_daily": [
+                    {
+                      "option": {
+                        "id": {
+                          "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                          "option_id": "862856f3-da5d-437b-abf6-88b134628f48",
+                          "attribute_id": "c10d309d-42c0-4c5b-9028-a9e7b0dda0da",
+                          "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                        },
+                        "title": "Ponctuel",
+                        "is_archived": null
+                      },
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "select",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "associated_people": [
+                    {
+                      "active_from": "2026-09-02T08:00:06.227593906Z",
+                      "active_until": null,
+                      "target_object": "people",
+                      "attribute_type": "record-reference",
+                      "created_by_actor": {
+                        "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                        "type": "workspace-member"
+                      },
+                      "target_record_id": "5983ca48-3570-44cc-962d-bbf4957b4e93"
+                    }
+                  ],
+                  "numero_de_facture": [
+                    {
+                      "value": "FASDR05628",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "text",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "score_prioritaire": [
+                    {
+                      "value": 30,
+                      "active_from": "2026-09-02T08:01:30.148318801Z",
+                      "active_until": null,
+                      "attribute_type": "number",
+                      "created_by_actor": {
+                        "id": "4981d2f9-c3ec-4ee8-932a-80c52d68ff26",
+                        "type": "app"
+                      }
+                    }
+                  ],
+                  "type_de_ressource": [
+                    {
+                      "option": {
+                        "id": {
+                          "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                          "option_id": "135207a6-ed16-4fe8-b97b-5ff53851cd00",
+                          "attribute_id": "83209e9f-6a76-4c4c-9e2e-04ed174cefd5",
+                          "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                        },
+                        "title": "SDR",
+                        "is_archived": null
+                      },
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "select",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "id_airtable_bureau": [],
+                  "proposal_sent_date": [
+                    {
+                      "value": "2026-06-02",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "date",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "district_preference": [
+                    {
+                      "value": "Paris 1er - 75001",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "text",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "duration_deal_daily": [
+                    {
+                      "value": 2,
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "number",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "engagement_end_date": [],
+                  "meeting_room_signed": [
+                    {
+                      "option": {
+                        "id": {
+                          "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                          "option_id": "63d0ff4e-ff85-40db-9ab8-8b2e5c8d85a3",
+                          "attribute_id": "0a10b7a8-0e9d-4cfe-8f4f-42106ca71097",
+                          "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                        },
+                        "title": "Salon Roll",
+                        "is_archived": false
+                      },
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "select",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "next_follow_up_date": [
+                    {
+                      "value": "2026-06-15",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "date",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "recurrence_detected": [
+                    {
+                      "value": false,
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "checkbox",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "associated_company_3": [
+                    {
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "target_object": "companies",
+                      "attribute_type": "record-reference",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      },
+                      "target_record_id": "270d430d-efc1-405f-8b5d-31dfc7212eed"
+                    }
+                  ],
+                  "recurrence_frequency": [],
+                  "admin_automation_stop": [
+                    {
+                      "option": {
+                        "id": {
+                          "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                          "option_id": "c8a01830-8fe6-4732-9ffd-98bb0be9073b",
+                          "attribute_id": "55fec6f7-c29a-4ffd-aa3a-1ffeeb917138",
+                          "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                        },
+                        "title": "Yes",
+                        "is_archived": null
+                      },
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "select",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "date_start_deal_daily": [
+                    {
+                      "value": "2026-07-08",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "date",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ],
+                  "lien_formulaire_reunion": [],
+                  "requalification_comment": [],
+                  "original_lead_created_at": [
+                    {
+                      "value": "2026-06-02T13:44:26.662000000Z",
+                      "active_from": "2026-08-28T07:19:35.603552901Z",
+                      "active_until": null,
+                      "attribute_type": "timestamp",
+                      "created_by_actor": {
+                        "id": "a004458b-9ec0-430d-be27-ccfc08b4e781",
+                        "type": "api-token"
+                      }
+                    }
+                  ]
+                },
+                "web_url": "https://app.attio.com/morning-prod/custom/deals_daily/record/3e00e351-075c-4bbb-897f-18bbe636bb77",
+                "created_at": "2026-08-28T07:19:35.603552901Z"
+              }
+            ]
+          },
+          "headers": {
+            "via": "1.1 google",
+            "date": "Wed, 02 Sep 2026 08:05:40 GMT",
+            "vary": "Origin",
+            "cf-ray": "a34b026108cd8bdf-DUB",
+            "server": "cloudflare",
+            "alt-svc": "h3=\":443\"; ma=86400",
+            "connection": "close",
+            "content-type": "application/json; charset=utf-8",
+            "x-accurate-at": "2026-09-02T08:05:22.818000000Z",
+            "cf-cache-status": "DYNAMIC",
+            "x-frame-options": "DENY",
+            "transfer-encoding": "chunked",
+            "x-attio-execution-id": "5e62a74e-d7e6-4ac9-84be-ecbe6f6aba2a",
+            "strict-transport-security": "max-age=7776000; includeSubDomains; preload",
+            "x-attio-record-query-score": "673",
+            "access-control-allow-origin": "*",
+            "access-control-expose-headers": "x-attio-client,x-attio-execution-id,x-attio-platform,x-attio-platform-version,x-attio-record-query-s..."
+          },
+          "statusCode": 200
+        },
+        "4": {
+          "id": "recJe2BoV7azGDgt6",
+          "mail": "jules.b@morning.fr",
+          "name": "Jules Bornhauser",
+          "actif": true,
+          "est_absent": 0,
+          "createdTime": "2026-07-27T13:02:17.000Z",
+          "__IMTINDEX__": 1,
+          "__IMTLENGTH__": 2,
+          "attio_user_id": "e1ddf2ca-504e-4510-b53d-1d7fb16d9f96",
+          "dernier_lead_daily": "2026-09-02T07:30:47.707Z"
+        },
+        "5": {
+          "array": [
+            {
+              "id": "recVSb3Bxh0dE4fZ1",
+              "mail": "vincent.b@morning.fr",
+              "name": "Vincent Bergerot",
+              "est_absent": null,
+              "attio_user_id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58"
+            }
+          ],
+          "__IMTAGGLENGTH__": 2
+        },
+        "6": {
+          "rr_id": "e1ddf2ca-504e-4510-b53d-1d7fb16d9f96",
+          "deal_value": 72,
+          "prev_owner_id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58"
+        },
+        "7": {
+          "body": {
+            "data": {
+              "id": {
+                "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                "record_id": "16129e19-c942-4b18-81f8-d9616f557c3e",
+                "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+              },
+              "values": {
+                "pax": [],
+                "name": [
+                  {
+                    "value": "SDR// Aerogen - Oct 12, 2026 - Ponctuel",
+                    "active_from": "2026-09-02T08:01:28.188055355Z",
+                    "active_until": null,
+                    "attribute_type": "text",
+                    "created_by_actor": {
+                      "id": "4981d2f9-c3ec-4ee8-932a-80c52d68ff26",
+                      "type": "app"
+                    }
+                  }
+                ],
+                "gclid": [],
+                "owner": [
+                  {
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "actor-reference",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    },
+                    "referenced_actor_id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                    "referenced_actor_type": "workspace-member"
+                  }
+                ],
+                "stage": [
+                  {
+                    "status": {
+                      "id": {
+                        "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                        "status_id": "edd12aa0-7e9c-4478-ab45-042534c1bc4a",
+                        "attribute_id": "992d6bcf-e109-438d-9c3b-d0a8b403e8b8",
+                        "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                      },
+                      "title": "Contact Entrant",
+                      "is_archived": false,
+                      "celebration_enabled": false,
+                      "target_time_in_status": null
+                    },
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "status",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "value": [
+                  {
+                    "active_from": "2026-09-02T08:01:30.148318801Z",
+                    "active_until": null,
+                    "currency_code": "EUR",
+                    "attribute_type": "currency",
+                    "currency_value": 72,
+                    "created_by_actor": {
+                      "id": "4981d2f9-c3ec-4ee8-932a-80c52d68ff26",
+                      "type": "app"
+                    }
+                  }
+                ],
+                "budget": [],
+                "fbclid": [],
+                "campagne": [],
+                "closed_at": [],
+                "lost_date": [],
+                "record_id": [
+                  {
+                    "value": "16129e19-c942-4b18-81f8-d9616f557c3e",
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "text",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "created_at": [
+                  {
+                    "value": "2026-09-02T08:01:25.725515897Z",
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "timestamp",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "created_by": [
+                  {
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "actor-reference",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    },
+                    "referenced_actor_id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                    "referenced_actor_type": "workspace-member"
+                  }
+                ],
+                "touchpoint": [],
+                "utm_medium": [],
+                "utm_source": [],
+                "deal_source": [
+                  {
+                    "option": {
+                      "id": {
+                        "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                        "option_id": "978b482d-914d-4e95-9307-48a5f011d25c",
+                        "attribute_id": "127e20ae-7d95-41f6-9e15-2e5bfcfc135b",
+                        "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                      },
+                      "title": "Organic",
+                      "is_archived": false
+                    },
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "select",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "id_airtable": [
+                  {
+                    "value": "recY6kNapqC6NajRR",
+                    "active_from": "2026-09-02T08:01:32.825941691Z",
+                    "active_until": null,
+                    "attribute_type": "text",
+                    "created_by_actor": {
+                      "id": "4981d2f9-c3ec-4ee8-932a-80c52d68ff26",
+                      "type": "app"
+                    }
+                  }
+                ],
+                "lost_reason": [],
+                "nb_d_heures": [],
+                "sdr_formule": [],
+                "airtable_url": [],
+                "lien_fillout": [
+                  {
+                    "value": "https://forms.morning.fr/t/tXujPixguSus",
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "text",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "platform_ref": [],
+                "utm_campaign": [],
+                "espace_signed": [],
+                "food_beverage": [],
+                "besoin_d_ecran": [],
+                "requalified_to": [],
+                "airtable_id_upd": [],
+                "closed_won_date": [],
+                "not_in_airtable": [],
+                "parrain_morning": [],
+                "lost_description": [],
+                "pipeline_version": [],
+                "proposed_morning": [],
+                "sdr_formule_slot": [],
+                "type_de_paiement": [],
+                "type_offre_daily": [
+                  {
+                    "option": {
+                      "id": {
+                        "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                        "option_id": "862856f3-da5d-437b-abf6-88b134628f48",
+                        "attribute_id": "c10d309d-42c0-4c5b-9028-a9e7b0dda0da",
+                        "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                      },
+                      "title": "Ponctuel",
+                      "is_archived": false
+                    },
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "select",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "associated_people": [
+                  {
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "target_object": "people",
+                    "attribute_type": "record-reference",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    },
+                    "target_record_id": "5983ca48-3570-44cc-962d-bbf4957b4e93"
+                  }
+                ],
+                "numero_de_facture": [],
+                "score_prioritaire": [
+                  {
+                    "value": 30,
+                    "active_from": "2026-09-02T08:01:30.148318801Z",
+                    "active_until": null,
+                    "attribute_type": "number",
+                    "created_by_actor": {
+                      "id": "4981d2f9-c3ec-4ee8-932a-80c52d68ff26",
+                      "type": "app"
+                    }
+                  }
+                ],
+                "type_de_ressource": [
+                  {
+                    "option": {
+                      "id": {
+                        "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                        "option_id": "135207a6-ed16-4fe8-b97b-5ff53851cd00",
+                        "attribute_id": "83209e9f-6a76-4c4c-9e2e-04ed174cefd5",
+                        "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                      },
+                      "title": "SDR",
+                      "is_archived": false
+                    },
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "select",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "id_airtable_bureau": [],
+                "proposal_sent_date": [],
+                "district_preference": [],
+                "duration_deal_daily": [
+                  {
+                    "value": 3,
+                    "active_from": "2026-09-02T08:01:46.799227528Z",
+                    "active_until": null,
+                    "attribute_type": "number",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "engagement_end_date": [],
+                "meeting_room_signed": [],
+                "next_follow_up_date": [],
+                "recurrence_detected": [],
+                "associated_company_3": [
+                  {
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "target_object": "companies",
+                    "attribute_type": "record-reference",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    },
+                    "target_record_id": "270d430d-efc1-405f-8b5d-31dfc7212eed"
+                  }
+                ],
+                "recurrence_frequency": [],
+                "admin_automation_stop": [
+                  {
+                    "option": {
+                      "id": {
+                        "object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                        "option_id": "f3a357bb-83c4-4970-ba48-c160c882d58d",
+                        "attribute_id": "55fec6f7-c29a-4ffd-aa3a-1ffeeb917138",
+                        "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+                      },
+                      "title": "No",
+                      "is_archived": false
+                    },
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "select",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "date_start_deal_daily": [
+                  {
+                    "value": "2026-10-12",
+                    "active_from": "2026-09-02T08:01:25.725515897Z",
+                    "active_until": null,
+                    "attribute_type": "date",
+                    "created_by_actor": {
+                      "id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                      "type": "workspace-member"
+                    }
+                  }
+                ],
+                "lien_formulaire_reunion": [],
+                "requalification_comment": [],
+                "original_lead_created_at": []
+              },
+              "web_url": "https://app.attio.com/morning-prod/custom/deals_daily/record/16129e19-c942-4b18-81f8-d9616f557c3e",
+              "created_at": "2026-09-02T08:01:25.725515897Z"
+            }
+          },
+          "headers": {
+            "via": "1.1 google",
+            "date": "Wed, 02 Sep 2026 08:05:56 GMT",
+            "vary": "Origin",
+            "cf-ray": "a34b0330ee88bf54-DUB",
+            "server": "cloudflare",
+            "alt-svc": "h3=\":443\"; ma=86400",
+            "connection": "close",
+            "content-type": "application/json; charset=utf-8",
+            "x-accurate-at": "2026-09-02T08:05:56.190839000Z",
+            "cf-cache-status": "DYNAMIC",
+            "x-frame-options": "DENY",
+            "transfer-encoding": "chunked",
+            "x-attio-execution-id": "41c10d1b-3c64-4ef2-b50a-5d39a131be2d",
+            "strict-transport-security": "max-age=7776000; includeSubDomains; preload",
+            "access-control-allow-origin": "*",
+            "access-control-expose-headers": "x-attio-client,x-attio-execution-id,x-attio-platform,x-attio-platform-version,x-attio-record-query-s..."
+          },
+          "statusCode": 200
+        },
+        "8": {
+          "body": {
+            "data": {
+              "id": {
+                "task_id": "64f5069f-68ef-4d23-8601-a099e6987991",
+                "workspace_id": "9a5298fd-76fa-46ab-8e67-418e7838aa1e"
+              },
+              "assignees": [
+                {
+                  "referenced_actor_id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+                  "referenced_actor_type": "workspace-member"
+                }
+              ],
+              "created_at": "2026-09-02T08:05:56.723916773Z",
+              "deadline_at": "2026-09-02T08:05:56.400000000Z",
+              "completed_at": null,
+              "is_completed": false,
+              "linked_records": [
+                {
+                  "target_object_id": "daa76d55-3f01-40f7-88ee-4e5f39f7d524",
+                  "target_record_id": "a78d3b55-a3e6-4811-9c42-d2a32ef62438"
+                }
+              ],
+              "created_by_actor": {
+                "id": "4981d2f9-c3ec-4ee8-932a-80c52d68ff26",
+                "type": "app"
+              },
+              "content_plaintext": "Contacter le lead Morning à la journée"
+            }
+          },
+          "headers": {
+            "via": "1.1 google",
+            "date": "Wed, 02 Sep 2026 08:05:57 GMT",
+            "vary": "Origin",
+            "cf-ray": "a34b0333987fc6a4-DUB",
+            "server": "cloudflare",
+            "alt-svc": "h3=\":443\"; ma=86400",
+            "connection": "close",
+            "content-type": "application/json; charset=utf-8",
+            "x-accurate-at": "2026-09-02T08:05:56.751652000Z",
+            "cf-cache-status": "DYNAMIC",
+            "x-frame-options": "DENY",
+            "transfer-encoding": "chunked",
+            "x-attio-execution-id": "2b1b69fe-990c-4a42-9759-a5d970f3b757",
+            "strict-transport-security": "max-age=7776000; includeSubDomains; preload",
+            "access-control-allow-origin": "*",
+            "access-control-expose-headers": "x-attio-client,x-attio-execution-id,x-attio-platform,x-attio-platform-version,x-attio-record-query-s..."
+          },
+          "statusCode": 200
+        },
+        "9": {
+          "id": "recVSb3Bxh0dE4fZ1",
+          "createdTime": "2026-07-27T13:02:17.000Z",
+          "fldJwHf83qIxZ2qMQ": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+          "fldL3Bdael03O807k": 0,
+          "fldf6FwZcZjSC2Hhl": "vincent.b@morning.fr",
+          "fldmq0SDLFYe3gJoS": "2026-09-02T08:05:57.742Z",
+          "fldonp0uuT09cwURL": "Vincent Bergerot",
+          "fldqu7355THk5W5bZ": true
+        },
+        "10": {
+          "id": "U0B6A18ES15",
+          "tz": "Europe/Brussels",
+          "name": "vincent.b",
+          "color": "99a949",
+          "is_bot": false,
+          "deleted": false,
+          "has_2fa": false,
+          "profile": {
+            "team": "T04HARJGD",
+            "email": "vincent.b@morning.fr",
+            "phone": "",
+            "skype": "",
+            "title": "",
+            "image_24": "https://avatars.slack-edge.com/2026-06-02/11258756126166_ccd0611727b676687afd_24.jpg",
+            "image_32": "https://avatars.slack-edge.com/2026-06-02/11258756126166_ccd0611727b676687afd_32.jpg",
+            "image_48": "https://avatars.slack-edge.com/2026-06-02/11258756126166_ccd0611727b676687afd_48.jpg",
+            "image_72": "https://avatars.slack-edge.com/2026-06-02/11258756126166_ccd0611727b676687afd_72.jpg",
+            "image_192": "https://avatars.slack-edge.com/2026-06-02/11258756126166_ccd0611727b676687afd_192.jpg",
+            "image_512": "https://avatars.slack-edge.com/2026-06-02/11258756126166_ccd0611727b676687afd_512.jpg",
+            "last_name": "Bergerot",
+            "real_name": "Vincent Bergerot",
+            "first_name": "Vincent",
+            "image_1024": "https://avatars.slack-edge.com/2026-06-02/11258756126166_ccd0611727b676687afd_1024.jpg",
+            "avatar_hash": "ccd0611727b6",
+            "status_text": "",
+            "display_name": "Vincent - Sales Daily",
+            "status_emoji": "",
+            "image_original": "https://avatars.slack-edge.com/2026-06-02/11258756126166_ccd0611727b676687afd_original.jpg",
+            "is_custom_image": true,
+            "status_expiration": 0,
+            "real_name_normalized": "Vincent Bergerot",
+            "status_text_canonical": "",
+            "display_name_normalized": "Vincent - Sales Daily",
+            "status_emoji_display_info": []
+          },
+          "team_id": "T04HARJGD",
+          "updated": "2026-08-18T06:42:09.000Z",
+          "is_admin": false,
+          "is_owner": false,
+          "tz_label": "Central European Summer Time",
+          "real_name": "Vincent Bergerot",
+          "tz_offset": 7200,
+          "is_app_user": false,
+          "__IMTINDEX__": 1,
+          "__IMTLENGTH__": 1,
+          "is_restricted": false,
+          "is_primary_owner": false,
+          "is_email_confirmed": true,
+          "is_ultra_restricted": false,
+          "who_can_share_contact_card": "EVERYONE"
+        },
+        "11": {
+          "ts": "1788336359.093969",
+          "channel": "C084VQ7D6B0",
+          "message": {
+            "ts": "1788336359.093969",
+            "team": "T04HARJGD",
+            "text": ":new: Nouveau lead à la journée ! *Commercial :*\n<@U0B6A18ES15> *Attribution :*\nClient récurrent *Pr...",
+            "type": "message",
+            "user": "U029F07NLLS",
+            "app_id": "A07FPU6DA9E",
+            "blocks": [
+              {
+                "text": {
+                  "text": ":new: Nouveau lead à la journée !",
+                  "type": "plain_text",
+                  "emoji": true
+                },
+                "type": "actions",
+                "fields": [
+                  {
+                    "text": "*Valeur estimée :*\n72 €",
+                    "type": "mrkdwn",
+                    "verbatim": null
+                  }
+                ],
+                "block_id": "sbeEO",
+                "elements": [
+                  {
+                    "url": "https://app.attio.com/morning-prod/custom/deals_daily/record/16129e19-c942-4b18-81f8-d9616f557c3e",
+                    "text": {
+                      "text": "Voir dans Attio",
+                      "type": "plain_text",
+                      "emoji": true
+                    },
+                    "type": "button",
+                    "style": "primary",
+                    "action_id": "gD63E"
+                  }
+                ]
+              }
+            ],
+            "bot_id": "B0ACNHQ7GPK",
+            "bot_profile": {
+              "id": "B0ACNHQ7GPK",
+              "name": "Make",
+              "icons": {
+                "image_36": "https://avatars.slack-edge.com/2024-08-01/7524075689713_076a674b29aa490f684e_36.png",
+                "image_48": "https://avatars.slack-edge.com/2024-08-01/7524075689713_076a674b29aa490f684e_48.png",
+                "image_72": "https://avatars.slack-edge.com/2024-08-01/7524075689713_076a674b29aa490f684e_72.png"
+              },
+              "app_id": "A07FPU6DA9E",
+              "deleted": false,
+              "team_id": "T04HARJGD",
+              "updated": "2026-02-01T17:37:07.000Z"
+            }
+          }
+        },
+        "13": {
+          "valeur_score": 0,
+          "urgence_score": 30,
+          "prev_pool_absent": 0,
+          "recurrence_score": 0
+        },
+        "14": {
+          "assignee_id": "e21d1d9e-9489-43c2-9e9b-f692ceee7d58",
+          "total_score": 30,
+          "attribution_mode": "Client récurrent"
+        },
+        "15": {
+          "assignee_name": "Vincent Bergerot",
+          "assignee_email": "vincent.b@morning.fr",
+          "assignee_airtable_rec": "recVSb3Bxh0dE4fZ1"
+        }
+      }
+    },
+    "scenario": {
+      "dlq": false,
+      "slots": null,
+      "dataloss": false,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "roundtrips": 1,
+      "sequential": true,
+      "confidential": false,
+      "freshVariables": false,
+      "autoCommitTriggerLast": true
+    }
+  },
+  "scheduling": {
+    "type": "immediately",
+    "maximum_runs_per_minute": 100
+  },
+  "interface": {
+    "input": [],
+    "output": []
+  }
+}
