@@ -53,8 +53,30 @@ Webhook
  → Slack DM au commercial
  → Attio POST tâche « Nouveau deal entrant - Call prise de brief »
  → Slack post #100sdr   [error handler: Ignore]
- → Webhook respond
 ```
+
+**Pas de module Webhook Response.** Make refuse de l'exécuter dès lors que la requête a
+transité par la file du webhook au lieu d'être traitée sur la connexion vivante :
+`Response can't be processed when scenario is not executed immediately on data arrival`
+(exécution `9067e9b6ee364b9f92a95a6b8fdac1a5`, 08/09). La réponse n'était donc jamais
+délivrée — aucun appelant ne peut en dépendre — et Make émettait un avertissement à
+chaque lead. Le module a été retiré.
+
+Accessoirement, un module Response maintient la connexion HTTP ouverte jusqu'à la fin du
+scénario. Nos exécutions durant 10 à 15 s à cause de l'appel à l'agent, le conserver
+aurait fait patienter l'appelant tout ce temps pour rien.
+
+### Contrat du webhook
+
+Le scénario ne consomme **qu'un seul champ** : `deal_id` (UUID du record `deals_daily`).
+Tout le reste — valeur, pax, société, dates, type de ressource — est relu depuis Attio au
+module 2. L'ancien scénario en attendait neuf (`type_ressource`, `pax`, `duration`,
+`company_name`, `date_start`, `existing_value`, `recurrence_frequency`,
+`attio_record_url`, `deal_id`).
+
+L'émetteur reste à documenter : il n'a jamais été identifié formellement. C'est
+l'historique d'exécutions de `6720662` qui a permis d'établir que le trafic arrive sur le
+hook `3456539` (`[DEV][JOURNEE_V3.1]`), sans dire qui l'émet.
 
 **Jules reste dans le round robin.** Le PDF disait de l'en exclure ; la consigne retenue est
 l'inverse. L'équilibre se fait tout seul : `dernier_lead_daily` est mis à jour pour l'assigné

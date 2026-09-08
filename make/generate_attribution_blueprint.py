@@ -451,23 +451,12 @@ def build():
         }],
     })
 
-    # 19 — Réponse au webhook
-    flow.append({
-        "id": 19,
-        "module": "gateway:WebhookRespond",
-        "version": 1,
-        "parameters": {},
-        "mapper": {
-            "status": "200",
-            "body": '{"ok":true,"deal_id":"{{1.deal_id}}",'
-                    '"assignee":"{{12.assignee_mail}}",'
-                    '"mode":"{{12.attribution_mode}}",'
-                    '"value":{{7.deal_value}},'
-                    '"recurrence":{{7.recurrence}}}',
-            "headers": [{"key": "Content-Type", "value": "application/json"}],
-        },
-        "metadata": designer(5100, 0, "Réponse"),
-    })
+    # Pas de module Webhook Response : Make refuse de l'exécuter dès lors que
+    # la requête a transité par la file du webhook plutôt que d'être traitée sur
+    # la connexion vivante — « Response can't be processed when scenario is not
+    # executed immediately on data arrival », avertissement observé sur
+    # l'exécution 9067e9b6ee364b9f92a95a6b8fdac1a5 du 08/09. La réponse n'était
+    # donc jamais délivrée, et l'appelant (une automatisation Attio) ne la lit pas.
 
     return {
         "name": "[PRD] [Attio] Attribution agentique - À la journée",
