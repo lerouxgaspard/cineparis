@@ -52,7 +52,7 @@ Webhook
  → Airtable Update (dernier_lead_daily = now)
  → Slack DM au commercial
  → Attio POST tâche « Nouveau deal entrant - Call prise de brief »
- → Slack post #100àlajournée   [error handler: Ignore]
+ → Slack post #100sdr   [error handler: Ignore]
  → Webhook respond
 ```
 
@@ -100,14 +100,17 @@ webhook 15 minutes empilerait les exécutions.
 | Base / table Airtable | `app1ZLIN13lGG0cPE` / `tbl362A2eveuwpuBE` (Equipe_Daily) |
 | Champ `dernier_lead_daily` | `fldmq0SDLFYe3gJoS` |
 | Modèle de l'agent | `defaultModel: "large"` (Make AI Provider → gpt-5-mini) |
-| Canal Slack | `#100àlajournée` → `C0ARC9N68F2` |
+| Canal Slack | `#100sdr` → `C084VQ7D6B0` |
 
 ### Écarts entre le PDF et la réalité Attio
 
 - Le stage **« Lead entrant » n'existe pas**. Les stages réels : `Contact Entrant`,
   `Lead Qualifié`, `Proposal`, `Proposal / Recurring`, `Won`, `Lost`. L'escalade filtre
   sur **Contact Entrant**.
-- Le canal **`#100journées` n'existe pas** ; c'est `#100àlajournée`.
+- Le canal **`#100journées` n'existe pas**. Deux candidats : `#100àlajournée`
+  (`C0ARC9N68F2`, 2 membres, sans le bot ni Jules) et `#100sdr` (`C084VQ7D6B0`,
+  24 membres dont Robot Bidule et Jules, déjà utilisé par l'ancien scénario).
+  **Retenu : `#100sdr`** — c'est là que se trouvent les commerciaux.
 - Le champ « Besoin récurrent détecté » **existe déjà** : `recurrence_detected` (checkbox).
   L'agent n'a qu'à le cocher.
 
@@ -116,11 +119,9 @@ webhook 15 minutes empilerait les exécutions.
 1. ~~Créer la checkbox `escalade_envoyee`~~ — **fait**, vérifié via le connecteur :
    `d84fdbbb-7e6b-4a0c-8e3d-6f85de9dfa4b`, slug `escalade_envoyee`, type checkbox,
    écrivable, non requis.
-2. **Inviter Robot Bidule dans `#100àlajournée`** (`/invite @bidule`). Vérifié le 08/09 :
-   le canal `C0ARC9N68F2` ne comptait que 2 membres (JB Dufour, Maria), sans le bot —
-   d'où l'échec `not_in_channel` au premier run. Y inviter aussi les commerciaux, Jules
-   en tête : il n'y était pas non plus, alors que c'est lui qui reçoit les leads
-   prioritaires et les escalades.
+2. Rien à faire côté Slack : **Robot Bidule est déjà membre de `#100sdr`**, avec les
+   24 personnes concernées. C'est ce qui a motivé le choix de ce canal plutôt que
+   `#100àlajournée`, qui n'avait ni le bot, ni Jules, ni aucun commercial.
 
 ### Ordre des notifications et tolérance aux pannes
 
@@ -175,9 +176,6 @@ la syntaxe du filtre Attio (`$not`, bornes `created_at`).
 
 ### Reste à faire
 
-- `/invite @bidule` dans `#100àlajournée` : sans lui le post canal échoue, absorbé par le
-  handler `Ignore` — le run finit en `status: 2` au lieu de `1`. Y inviter aussi les
-  commerciaux, le canal n'ayant que 2 membres.
 - Arbitrer `dans_rotation` (voir §7).
 - Supprimer les webhooks devenus orphelins : `[DEV][JOURNEE_V3]` (`3456305`). Quatre hooks
   aux noms voisins ont déjà causé une erreur de branchement lors de la bascule.

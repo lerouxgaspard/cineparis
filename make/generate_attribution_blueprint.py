@@ -25,7 +25,7 @@ AT_TABLE = "tbl362A2eveuwpuBE"          # Equipe_Daily
 AT_FLD_DERNIER_LEAD = "fldmq0SDLFYe3gJoS"
 
 # --- Slack -------------------------------------------------------------------
-SLACK_CHANNEL_JOURNEE = "C0ARC9N68F2"   # #100àlajournée
+SLACK_CHANNEL_JOURNEE = "C084VQ7D6B0"   # #100sdr (24 membres, Robot Bidule déjà dedans)
 
 SEUIL_VALEUR = 5000
 
@@ -434,7 +434,7 @@ def build():
             "blocks": chan_blocks,
             "text": "Nouveau lead à la journée",
         },
-        "metadata": designer(4800, 0, "Slack - #100alajournee"),
+        "metadata": designer(4800, 0, "Slack - #100sdr"),
         # Le DM au commercial (16) et la tâche Attio (18) sont le coeur du flux :
         # s'ils échouent, le scénario DOIT échouer bruyamment. Le post canal est
         # une diffusion de confort — un bot désinvité ou un canal archivé ne doit

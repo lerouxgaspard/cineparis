@@ -531,7 +531,7 @@
         "parse": false,
         "mrkdwn": true,
         "link_names": true,
-        "channel": "C0ARC9N68F2",
+        "channel": "C084VQ7D6B0",
         "channelType": "public",
         "channelWType": "list",
         "blocks": "{\n \"blocks\": [\n  {\n   \"type\": \"section\",\n   \"text\": {\n    \"type\": \"mrkdwn\",\n    \"text\": \":new: *Nouveau lead pour <@{{15.id}}>* — {{12.attribution_mode}}\"\n   }\n  },\n  {\n   \"type\": \"section\",\n   \"fields\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Produit :*\\n{{2.body.data.values.type_de_ressource[].option.title}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Participants :*\\n{{ifempty(2.body.data.values.pax[].value; \\\"non précisé\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Date :*\\n{{ifempty(2.body.data.values.date_start_deal_daily[].value; \\\"à préciser\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Société :*\\n{{ifempty(2.body.data.values.name[].value; \\\"inconnue\\\")}}\"\n    }\n   ]\n  },\n  {\n   \"type\": \"actions\",\n   \"elements\": [\n    {\n     \"type\": \"button\",\n     \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \"Voir le deal\",\n      \"emoji\": true\n     },\n     \"url\": \"https://app.attio.com/morning/deals_daily/record/{{1.deal_id}}\"\n    }\n   ]\n  }\n ]\n}",
@@ -541,7 +541,7 @@
         "designer": {
           "x": 4800,
           "y": 0,
-          "name": "Slack - #100alajournee"
+          "name": "Slack - #100sdr"
         }
       },
       "onerror": [
