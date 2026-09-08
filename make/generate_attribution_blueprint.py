@@ -251,6 +251,16 @@ def build():
         ("rr_rec", "{{first(map(5.array; \"id\"))}}"),
         ("rr_mail", "{{first(map(5.array; \"mail\"))}}"),
         ("rr_name", "{{first(map(5.array; \"name\"))}}"),
+        # Aplatis pour Slack. Les blocks sont du JSON : un retour à la ligne brut
+        # dans une valeur interpolée casse le parsing (« Bad control character in
+        # string literal », échecs du 08/09 à 12:58 et 13:26). La justification de
+        # l'agent est déclarée multiline, elle arrive donc sur plusieurs lignes.
+        ("justification_txt",
+         "{{replace(ifempty(6.jsonResponse.justification; \" \"); "
+         "\"/[\\r\\n\\t]+/g\"; \" \")}}"),
+        ("deal_name_txt",
+         "{{replace(ifempty(2.body.data.values.name[].value; \"inconnue\"); "
+         "\"/[\\r\\n\\t]+/g\"; \" \")}}"),
     ], name="Normalisation"))
 
     # 8 — La décision : deux branches explicites
@@ -389,12 +399,12 @@ def build():
             {"type": "mrkdwn", "text": "*Produit :*\n{{2.body.data.values.type_de_ressource[].option.title}}"},
             {"type": "mrkdwn", "text": "*Participants :*\n{{ifempty(2.body.data.values.pax[].value; \"non précisé\")}}"},
             {"type": "mrkdwn", "text": "*Date :*\n{{ifempty(2.body.data.values.date_start_deal_daily[].value; \"à préciser\")}}"},
-            {"type": "mrkdwn", "text": "*Société :*\n{{ifempty(2.body.data.values.name[].value; \"inconnue\")}}"},
+            {"type": "mrkdwn", "text": "*Société :*\n{{7.deal_name_txt}}"},
             {"type": "mrkdwn", "text": "*Valeur estimée :*\n{{7.deal_value}} EUR"},
             {"type": "mrkdwn", "text": "*Récurrent :*\n{{if(7.recurrence; \"oui\"; \"non\")}}"},
         ]},
         {"type": "context", "elements": [
-            {"type": "mrkdwn", "text": ":robot_face: {{6.jsonResponse.justification}}"}]},
+            {"type": "mrkdwn", "text": ":robot_face: {{7.justification_txt}}"}]},
         {"type": "actions", "elements": [
             {"type": "button", "text": {"type": "plain_text", "text": "Ouvrir le deal", "emoji": True},
              "url": "{{2.body.data.web_url}}", "style": "primary"}]},

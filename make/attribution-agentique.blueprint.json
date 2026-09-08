@@ -227,6 +227,14 @@
           {
             "name": "rr_name",
             "value": "{{first(map(5.array; \"name\"))}}"
+          },
+          {
+            "name": "justification_txt",
+            "value": "{{replace(ifempty(6.jsonResponse.justification; \" \"); \"/[\\r\\n\\t]+/g\"; \" \")}}"
+          },
+          {
+            "name": "deal_name_txt",
+            "value": "{{replace(ifempty(2.body.data.values.name[].value; \"inconnue\"); \"/[\\r\\n\\t]+/g\"; \" \")}}"
           }
         ],
         "scope": "roundtrip"
@@ -509,7 +517,7 @@
         "channel": "C084VQ7D6B0",
         "channelType": "public",
         "channelWType": "list",
-        "blocks": "{\n \"blocks\": [\n  {\n   \"type\": \"header\",\n   \"text\": {\n    \"type\": \"plain_text\",\n    \"text\": \":rotating_light: Nouveau lead à la journée\",\n    \"emoji\": true\n   }\n  },\n  {\n   \"type\": \"section\",\n   \"text\": {\n    \"type\": \"mrkdwn\",\n    \"text\": \"*Pour <@{{15.id}}>* — attribution : {{12.attribution_mode}}\"\n   }\n  },\n  {\n   \"type\": \"section\",\n   \"fields\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Produit :*\\n{{2.body.data.values.type_de_ressource[].option.title}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Participants :*\\n{{ifempty(2.body.data.values.pax[].value; \\\"non précisé\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Date :*\\n{{ifempty(2.body.data.values.date_start_deal_daily[].value; \\\"à préciser\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Société :*\\n{{ifempty(2.body.data.values.name[].value; \\\"inconnue\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Valeur estimée :*\\n{{7.deal_value}} EUR\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Récurrent :*\\n{{if(7.recurrence; \\\"oui\\\"; \\\"non\\\")}}\"\n    }\n   ]\n  },\n  {\n   \"type\": \"context\",\n   \"elements\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \":robot_face: {{6.jsonResponse.justification}}\"\n    }\n   ]\n  },\n  {\n   \"type\": \"actions\",\n   \"elements\": [\n    {\n     \"type\": \"button\",\n     \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \"Ouvrir le deal\",\n      \"emoji\": true\n     },\n     \"url\": \"{{2.body.data.web_url}}\",\n     \"style\": \"primary\"\n    }\n   ]\n  },\n  {\n   \"type\": \"context\",\n   \"elements\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \":stopwatch: *À traiter en moins de 5 minutes* — réagis à ce message.\"\n    }\n   ]\n  }\n ]\n}",
+        "blocks": "{\n \"blocks\": [\n  {\n   \"type\": \"header\",\n   \"text\": {\n    \"type\": \"plain_text\",\n    \"text\": \":rotating_light: Nouveau lead à la journée\",\n    \"emoji\": true\n   }\n  },\n  {\n   \"type\": \"section\",\n   \"text\": {\n    \"type\": \"mrkdwn\",\n    \"text\": \"*Pour <@{{15.id}}>* — attribution : {{12.attribution_mode}}\"\n   }\n  },\n  {\n   \"type\": \"section\",\n   \"fields\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Produit :*\\n{{2.body.data.values.type_de_ressource[].option.title}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Participants :*\\n{{ifempty(2.body.data.values.pax[].value; \\\"non précisé\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Date :*\\n{{ifempty(2.body.data.values.date_start_deal_daily[].value; \\\"à préciser\\\")}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Société :*\\n{{7.deal_name_txt}}\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Valeur estimée :*\\n{{7.deal_value}} EUR\"\n    },\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \"*Récurrent :*\\n{{if(7.recurrence; \\\"oui\\\"; \\\"non\\\")}}\"\n    }\n   ]\n  },\n  {\n   \"type\": \"context\",\n   \"elements\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \":robot_face: {{7.justification_txt}}\"\n    }\n   ]\n  },\n  {\n   \"type\": \"actions\",\n   \"elements\": [\n    {\n     \"type\": \"button\",\n     \"text\": {\n      \"type\": \"plain_text\",\n      \"text\": \"Ouvrir le deal\",\n      \"emoji\": true\n     },\n     \"url\": \"{{2.body.data.web_url}}\",\n     \"style\": \"primary\"\n    }\n   ]\n  },\n  {\n   \"type\": \"context\",\n   \"elements\": [\n    {\n     \"type\": \"mrkdwn\",\n     \"text\": \":stopwatch: *À traiter en moins de 5 minutes* — réagis à ce message.\"\n    }\n   ]\n  }\n ]\n}",
         "text": "Nouveau lead à la journée"
       },
       "metadata": {

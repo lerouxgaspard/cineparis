@@ -54,7 +54,7 @@ QUERY_BODY = json.dumps({
 # Une ligne de digest par lead. Le propriétaire est résolu en nom via Equipe_Daily :
 # l'API Attio ne renvoie qu'un UUID, illisible dans Slack.
 LIGNE = (
-    "• *{{4.values.name[].value}}* — "
+    "• *{{replace(ifempty(4.values.name[].value; \"sans nom\"); \"/[\\r\\n\\t]+/g\"; \" \")}}* — "
     "{{ifempty(get(first(4.values.value); \"currency_value\"); 0)}} EUR — "
     "{{ifempty(first(map(3.array; \"name\"; \"attio_user_id\"; "
     "first(map(4.values.owner; \"referenced_actor_id\")))); \"non attribué\")}} — "

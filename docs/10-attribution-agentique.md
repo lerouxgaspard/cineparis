@@ -66,6 +66,30 @@ Accessoirement, un module Response maintient la connexion HTTP ouverte jusqu'à 
 scénario. Nos exécutions durant 10 à 15 s à cause de l'appel à l'agent, le conserver
 aurait fait patienter l'appelant tout ce temps pour rien.
 
+### Les valeurs interpolées dans les blocks Slack sont aplaties
+
+Le champ `blocks` est du JSON. Une valeur interpolée contenant un retour à la ligne casse
+le parsing avant même l'appel à Slack :
+
+```
+IMLError: Function 'getBlocksData' finished with error!
+JSON for blocks is invalid. Bad control character in string literal
+```
+
+Deux exécutions perdues le 08/09, à 12:58:25 et 13:26:42. La source est la justification
+de l'agent, déclarée `multiline: true` dans le schéma de sortie — dès qu'elle tient sur
+deux lignes, le message échoue.
+
+Le nettoyage se fait dans le module 7 (`SetVariables`), pas dans les blocks : le champ y
+est du texte brut, sans contexte JSON, donc l'expression IML n'a pas à être ré-échappée.
+Les blocks ne citent ensuite que `{{7.justification_txt}}` et `{{7.deal_name_txt}}`.
+
+Le digest d'escalade reçoit le même traitement sur le nom du deal.
+
+**Ce bug survit à la suppression du DM.** Le module canal porte un handler `Ignore` : il
+aurait avalé l'erreur en silence, faisant disparaître la notification sans laisser de
+trace dans les logs.
+
 ### Contrat du webhook
 
 Le scénario ne consomme **qu'un seul champ** : `deal_id` (UUID du record `deals_daily`).
