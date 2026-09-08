@@ -29,6 +29,9 @@ SLACK_CHANNEL_JOURNEE = "C0ARC9N68F2"   # #100àlajournée
 
 SEUIL_VALEUR = 5000
 
+# Palier du Make AI Provider. "large" = gpt-5-mini (reasoning low).
+AGENT_MODEL = "large"
+
 SYSTEM_PROMPT = """Tu es un assistant de qualification de leads pour Morning, \
 un opérateur d'espaces de travail. Tu analyses UN lead entrant sur l'offre \
 « à la journée » (coworking, bureau à la journée, salle de réunion / SDR).
@@ -211,12 +214,29 @@ def build():
         "id": 6,
         "module": "ai-local-agent:RunLocalAIAgent",
         "version": 0,
+        "tools": [],
         "parameters": {"makeConnectionId": CONN_AI},
         "mapper": {
             "systemPrompt": SYSTEM_PROMPT,
             "message": AGENT_INPUT,
+            "files": [],
+            "threadId": "",
             "outputType": "make-schema",
             "outputSchema": AGENT_OUTPUT_SCHEMA,
+            # Relevés sur le scénario 7299000 après réglage manuel du modèle.
+            # Le RPC RpcGetModels est refusé hors contexte organisation, donc ces
+            # valeurs ne sont pas découvrables depuis l'extérieur : sans elles,
+            # l'import échoue sur « config.llmConfig.llmModel Required ».
+            # "large" = gpt-5-mini, reasoning low, réservé aux plans payants.
+            "defaultModel": AGENT_MODEL,
+            "tokenLimit": "50",
+            "promptCaching": "none",
+            "fallbackEnabled": False,
+            "modelConfig": {
+                "timeout": "",
+                "recursionLimit": "300",
+                "iterationsFromHistoryCount": "10",
+            },
         },
         "metadata": designer(1500, 0, "Agent - Lecture du besoin"),
     })

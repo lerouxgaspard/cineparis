@@ -89,6 +89,7 @@ webhook 15 minutes empilerait les exécutions.
 | Jules Bornhauser | `e1ddf2ca-504e-4510-b53d-1d7fb16d9f96` |
 | Base / table Airtable | `app1ZLIN13lGG0cPE` / `tbl362A2eveuwpuBE` (Equipe_Daily) |
 | Champ `dernier_lead_daily` | `fldmq0SDLFYe3gJoS` |
+| Modèle de l'agent | `defaultModel: "large"` (Make AI Provider → gpt-5-mini) |
 | Canal Slack | `#100àlajournée` → `C0ARC9N68F2` |
 
 ### Écarts entre le PDF et la réalité Attio
@@ -132,10 +133,13 @@ coller le JSON.
 
 Puis, à la main dans l'éditeur :
 
-- **Scénario 1** : recréer le webhook (le blueprint ne peut pas le porter — règle Make),
-  et **choisir le modèle dans le module Agent**. Ce champ dépend d'un RPC
-  (`RpcGetModels`) que l'organisation bloque hors de son contexte : impossible à
-  pré-remplir depuis l'extérieur.
+- **Scénario 1** : recréer le webhook (le blueprint ne peut pas le porter — règle Make).
+  Le **modèle de l'agent est désormais pré-rempli** : `defaultModel: "large"`, relevé sur
+  le scénario 7299000 après réglage manuel. Côté Make AI Provider, « Large » correspond à
+  `gpt-5-mini`, reasoning low, réservé aux plans payants. Le RPC `RpcGetModels` reste
+  refusé hors contexte organisation, donc cette valeur n'est pas redécouvrable : elle est
+  codée dans le générateur. Sans elle, l'import échoue sur
+  `config.llmConfig.llmModel Required`.
 - **Scénario 2** : régler la planification sur 5 minutes.
 
 ## 6. État de validation
@@ -156,3 +160,23 @@ et non une chaîne ; et le module Sleep ne peut pas dépasser 300 s.
 lecture seule (pas de `scenarios_create`). Faites un **Run once** sur un deal de test
 avant d'activer, en particulier pour vérifier la forme réelle des réponses Attio
 (`values.<champ>[]`) utilisée dans les mappings.
+
+## 7. Le piège `dans_rotation`
+
+La table `Equipe_Daily` porte deux cases distinctes, et elles ne disent pas la même chose :
+
+| Personne | `actif` | `dans_rotation` |
+|---|---|---|
+| Jules Bornhauser | ✅ | ❌ |
+| Justine, Juliette, Paul | ✅ | ✅ |
+| Vincent Bergerot, Louise Pauriol | ❌ | ✅ |
+
+La formule du module 4 ne filtre que sur `actif` (et l'absence). Le pool fait donc
+4 personnes, **Jules compris** — conforme à la consigne retenue, qui contredit le PDF.
+
+`dans_rotation` est décoché pour Jules et lui seul : c'est l'ancienne règle « exclure Jules
+du Round Robin » figée dans la donnée. Le scénario l'ignore volontairement. Tant que cet
+écart subsiste, quiconque « corrigera » la formule pour honorer `dans_rotation` inversera
+la décision sans s'en apercevoir. À arbitrer : cocher `dans_rotation` pour Jules, ou
+supprimer le champ — Vincent et Louise l'ont coché mais sont de toute façon écartés
+par `actif`.
