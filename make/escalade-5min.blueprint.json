@@ -17,7 +17,7 @@
             "value": "application/json"
           }
         ],
-        "body": "{\"filter\": {\"$and\": [{\"stage\": {\"$eq\": \"Contact Entrant\"}}, {\"escalade_envoyee\": {\"$eq\": false}}, {\"created_at\": {\"$lt\": \"{{formatDate(addMinutes(now; -15); \\\"YYYY-MM-DDTHH:mm:ss[Z]\\\"; \\\"UTC\\\")}}\"}}]}, \"sorts\": [{\"direction\": \"asc\", \"attribute\": \"created_at\", \"field\": \"value\"}], \"limit\": 50}"
+        "body": "{\"filter\": {\"$and\": [{\"stage\": {\"$eq\": \"Contact Entrant\"}}, {\"$not\": {\"escalade_envoyee\": {\"$eq\": true}}}, {\"created_at\": {\"$lt\": \"{{formatDate(addMinutes(now; -15); \\\"YYYY-MM-DDTHH:mm:ss[Z]\\\"; \\\"UTC\\\")}}\"}}, {\"created_at\": {\"$gt\": \"{{formatDate(addHours(now; -4); \\\"YYYY-MM-DDTHH:mm:ss[Z]\\\"; \\\"UTC\\\")}}\"}}]}, \"sorts\": [{\"direction\": \"asc\", \"attribute\": \"created_at\", \"field\": \"value\"}], \"limit\": 50}"
       },
       "metadata": {
         "designer": {

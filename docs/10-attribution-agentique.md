@@ -52,11 +52,24 @@ l'inverse. L'équilibre se fait tout seul : `dernier_lead_daily` est mis à jour
 ### Scénario 2 — Escalade (planifié toutes les 5 min)
 
 ```
-Attio POST /records/query   [stage = Contact Entrant, escalade_envoyee = false,
-                             created_at < now - 15 min]
+Attio POST /records/query   [stage = Contact Entrant
+                             ET PAS (escalade_envoyee = true)
+                             ET created_at < now - 15 min
+                             ET created_at > now - 4 h]
  → Iterator → Slack SearchUser (Jules) → Slack DM d'alerte
  → Attio PATCH escalade_envoyee = true
 ```
+
+Deux subtilités du filtre, l'une et l'autre vérifiées contre les données réelles :
+
+- **`$not … $eq true`, et non `$eq false`.** L'attribut `escalade_envoyee` vient d'être
+  créé : il est *absent* de tous les deals existants, et `null` n'est pas `false`. La forme
+  négative attrape les deux.
+- **La borne basse à 4 heures est indispensable.** Plus de 50 deals (`has_more: true`) sont
+  au stage Contact Entrant depuis le 2 septembre. Sans elle, le premier run envoyait 50 DM
+  à Jules d'un coup, puis 50 de plus toutes les 5 minutes. Au-delà de quelques heures, un
+  lead resté à Contact Entrant n'est plus un SLA raté à signaler — c'est du nettoyage de
+  pipe, qui ne relève pas de ce scénario.
 
 Pourquoi un second scénario : **`util:FunctionSleep` est plafonné à 300 secondes** (vérifié
 sur le schéma du module). Un délai de 15 minutes en ligne est impossible, et bloquer un run
@@ -88,10 +101,9 @@ webhook 15 minutes empilerait les exécutions.
 
 ## 4. Avant d'importer
 
-1. **Créer la checkbox `escalade_envoyee`** sur l'objet *À la journée*
-   (Attio → Attributs → Nouveau → Checkbox). Sans elle, le scénario 2 ré-alerte Jules
-   toutes les 5 minutes sur le même lead. Le connecteur Attio n'expose aucun outil de
-   création d'attribut, cette étape est manuelle.
+1. ~~Créer la checkbox `escalade_envoyee`~~ — **fait**, vérifié via le connecteur :
+   `d84fdbbb-7e6b-4a0c-8e3d-6f85de9dfa4b`, slug `escalade_envoyee`, type checkbox,
+   écrivable, non requis.
 2. Vérifier que **Robot Bidule** est bien invité dans `#100àlajournée`.
 
 ## 5. Import

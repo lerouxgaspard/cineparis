@@ -18,16 +18,28 @@ ATTIO_OBJECT = "deals_daily"
 JULES_SLACK_EMAIL = "jules.b@morning.fr"
 STAGE_CONTACT_ENTRANT = "Contact Entrant"
 DELAI_MINUTES = 15
+FENETRE_HEURES = 4      # ne jamais escalader un lead plus vieux que ça
 
 # Deals encore au stage d'entrée, jamais escaladés, créés il y a plus de 15 min.
 QUERY_BODY = json.dumps({
     "filter": {
         "$and": [
             {"stage": {"$eq": STAGE_CONTACT_ENTRANT}},
-            {"escalade_envoyee": {"$eq": False}},
+            # $not plutôt que $eq false : les deals créés avant l'existence de
+            # l'attribut n'ont aucune valeur (null), et null != false. Cette forme
+            # attrape null ET false, et n'exclut que les leads déjà escaladés.
+            {"$not": {"escalade_envoyee": {"$eq": True}}},
+            # Borne haute : le lead a dépassé le délai.
             {"created_at": {
                 "$lt": "{{formatDate(addMinutes(now; -%d); \"YYYY-MM-DDTHH:mm:ss[Z]\"; \"UTC\")}}"
                 % DELAI_MINUTES}},
+            # Borne basse INDISPENSABLE : escalade_envoyee est vide sur tout
+            # l'historique, donc sans elle le premier run alerterait Jules sur
+            # chaque vieux lead resté à Contact Entrant. On ne regarde que les
+            # leads des dernières heures — au-delà, ce n'est plus un SLA raté.
+            {"created_at": {
+                "$gt": "{{formatDate(addHours(now; -%d); \"YYYY-MM-DDTHH:mm:ss[Z]\"; \"UTC\")}}"
+                % FENETRE_HEURES}},
         ]
     },
     "sorts": [{"direction": "asc", "attribute": "created_at", "field": "value"}],
